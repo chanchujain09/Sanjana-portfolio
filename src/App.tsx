@@ -7,6 +7,45 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'motion/react';
 import { Video, PlayCircle, Play, Film, Clock, Briefcase, Pencil, Pause, Palette, Mic, GraduationCap, Phone, Mail, MapPin, CheckCircle, Star, Quote, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, Heart, Globe, Scissors, Layers, Music, PenTool, Share2, TrendingUp, Instagram, Twitter, Music2, FileText, Sparkles, Download, MonitorPlay, Volume2, VolumeX } from 'lucide-react';
 
+const SERVICES = [
+  {
+    num: '01',
+    title: 'Short Form Editing',
+    desc: 'Platform-ready reels and shorts with clean cuts and perfect pacing.',
+    bullets: ['Optimized for Instagram, YouTube & TikTok', 'Captions and transitions included', 'Delivered within 48–72 hours']
+  },
+  {
+    num: '02',
+    title: 'Visual Storytelling',
+    desc: 'Turning raw footage into emotionally engaging narratives.',
+    bullets: ['Hook, story arc and CTA structure', 'Pacing matched to your audience', 'Educational and brand storytelling']
+  },
+  {
+    num: '03',
+    title: 'Motion Graphics',
+    desc: 'Text animations, intros, and on-brand visual effects.',
+    bullets: ['Custom intros and outros', 'On-brand text overlays', 'After Effects motion design']
+  },
+  {
+    num: '04',
+    title: 'Color Grading',
+    desc: 'Every frame color-treated to feel cinematic and intentional.',
+    bullets: ['Custom color profile per project', 'LUT and skin tone correction', 'Consistent look across all edits']
+  },
+  {
+    num: '05',
+    title: 'Audio Finetuning',
+    desc: 'Balanced, clean audio that makes every word land.',
+    bullets: ['Noise removal and cleanup', 'EQ and volume balancing', 'Music and SFX mixing']
+  },
+  {
+    num: '06',
+    title: 'Content for Institutions',
+    desc: 'Specialized in educational and university promotional content.',
+    bullets: ['Campus tours and event coverage', 'Admissions and brand films', 'Social media campaigns for colleges']
+  }
+];
+
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
   public state = { hasError: false };
   public props: {children: React.ReactNode};
@@ -1472,106 +1511,131 @@ export default function App() {
         </div>
       </section>
 
-      <ErrorBoundary>
       {/* Services Section */}
-      <section id="Services" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] pt-[96px] pb-[96px] flex flex-col items-center overflow-hidden" ref={servicesRef}>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 w-full flex flex-col items-center">
-        {/* Header */}
-        <div className="px-4 py-1.5 rounded-full border border-[rgba(255,255,255,0.08)] bg-[#12121a] text-gray-300 text-sm font-medium mb-4">
-          Services
-        </div>
-        <h2 className="text-[40px] font-bold tracking-tight text-white mb-4" onMouseEnter={() => setCursorVariant('text')} onMouseLeave={() => setCursorVariant('default')}>
-          What I Offer
-        </h2>
-        <p className="text-gray-400 text-[16px] mb-10 text-center">
-          End-to-end video production — from raw footage to ready-to-post content.
-        </p>
+      <section id="services" style={{ padding: '96px 24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '6px 16px', borderRadius: '999px',
+              border: '1px solid #1f1f2e', backgroundColor: '#12121a',
+              color: '#9ca3af', fontSize: '13px', marginBottom: '16px'
+            }}>Services</div>
+            <h2 style={{ fontSize: '40px', fontWeight: 700, color: 'white', margin: '0 0 12px', letterSpacing: '-0.02em' }}>
+              What I Offer
+            </h2>
+            <p style={{ color: '#a1a1aa', fontSize: '16px', margin: 0 }}>
+              End-to-end video production — from raw footage to ready-to-post content.
+            </p>
+          </div>
 
-        {/* Services Accordion Layout */}
-        <div className="flex flex-col lg:flex-row gap-6 items-start max-w-5xl mx-auto w-full">
-          {/* Left Column - List */}
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            animate={servicesInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className="w-full lg:w-[40%] bg-[#111118] border border-[rgba(255,255,255,0.08)] rounded-2xl overflow-hidden divide-y divide-[rgba(255,255,255,0.08)]"
-          >
-            {servicesData?.map((service, idx) => (
-              <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')} 
-                key={idx}
-                onClick={() => setActiveService(idx)}
-                className={`w-full flex items-center justify-between py-4 px-5 transition-all duration-200 text-left ${
-                  activeService === idx 
-                    ? 'bg-[#111118] border-l-[3px] border-l-purple-600' 
-                    : 'bg-transparent hover:bg-[#111118]/50 border-l-[3px] border-l-transparent'
-                }`}
-              >
-                <div className="flex items-center">
-                  <span className={`text-xs font-mono mr-4 ${activeService === idx ? 'text-purple-600' : 'text-gray-600'}`}>
-                    {service?.num}
-                  </span>
-                  <span className={`text-[16px] font-medium transition-colors ${activeService === idx ? 'text-purple-400' : 'text-white'}`}>
-                    {service?.title}
-                  </span>
-                </div>
-                <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${activeService === idx ? 'rotate-90 text-purple-400' : 'text-gray-500'}`} />
-              </button>
-            ))}
-          </motion.div>
-
-          {/* Right Column - Panel */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={servicesInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className="w-full lg:w-[60%] relative min-h-[320px]"
-          >
-            <AnimatePresence mode="wait">
-              {servicesData?.[activeService] && (
-                <motion.div
-                  key={activeService}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.25 }}
-                  className="bg-[#111118] border border-[rgba(255,255,255,0.08)] rounded-2xl p-9 relative overflow-hidden h-full flex flex-col w-full"
+          {/* Two column layout */}
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'flex-start' }} className="flex-col md:flex-row">
+            
+            {/* LEFT — Service list */}
+            <div style={{
+              width: '100%', flexShrink: 0,
+              backgroundColor: '#111118',
+              border: '1px solid #1f1f2e',
+              borderRadius: '16px',
+              overflow: 'hidden'
+            }} className="md:w-[40%]">
+              {SERVICES.map((service, i) => (
+                <div
+                  key={i}
+                  onClick={() => setActiveService(i)}
+                  onMouseEnter={() => setCursorVariant('hover')}
+                  onMouseLeave={() => setCursorVariant('default')}
+                  style={{
+                    padding: '16px 20px',
+                    borderBottom: i < SERVICES.length - 1 ? '1px solid #1f1f2e' : 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    backgroundColor: activeService === i ? 'rgba(124,58,237,0.08)' : 'transparent',
+                    borderLeft: activeService === i ? '3px solid #7c3aed' : '3px solid transparent',
+                    cursor: 'none', transition: 'all 200ms'
+                  }}
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="w-[44px] h-[44px] rounded-xl bg-[#1e0a3c] border border-[#2a1060] flex items-center justify-center">
-                      {React.createElement(servicesData[activeService].icon, { className: "w-5 h-5 text-purple-500 fill-purple-500" })}
-                    </div>
-                    <span className="text-[60px] font-bold text-[#2d1a5e] leading-none absolute top-6 right-8 pointer-events-none">
-                      {servicesData[activeService].num}
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{
+                      color: activeService === i ? '#7c3aed' : '#4b5563',
+                      fontSize: '11px', fontFamily: 'monospace', fontWeight: 600
+                    }}>{service.num}</span>
+                    <span style={{
+                      color: activeService === i ? '#a78bfa' : 'white',
+                      fontSize: '15px', fontWeight: 500
+                    }}>{service.title}</span>
                   </div>
-                  
-                  <h3 className="text-[28px] font-bold text-white mt-4 relative z-10">
-                    {servicesData[activeService].title}
+                  <span style={{
+                    color: activeService === i ? '#7c3aed' : '#374151',
+                    fontSize: '16px',
+                    transform: activeService === i ? 'rotate(90deg)' : 'rotate(0deg)',
+                    transition: 'transform 200ms',
+                    display: 'inline-block'
+                  }}>›</span>
+                </div>
+              ))}
+            </div>
+
+            {/* RIGHT — Active service detail */}
+            <div style={{ flex: 1, minHeight: '320px', width: '100%' }}>
+              {SERVICES[activeService] && (
+                <div style={{
+                  backgroundColor: '#111118',
+                  border: '1px solid #1f1f2e',
+                  borderRadius: '16px',
+                  padding: '36px',
+                  height: '100%',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  {/* Step number bg */}
+                  <span style={{
+                    position: 'absolute', top: '16px', right: '24px',
+                    fontSize: '72px', fontWeight: 800,
+                    color: 'rgba(88,28,180,0.15)', lineHeight: 1,
+                    userSelect: 'none', pointerEvents: 'none'
+                  }}>{SERVICES[activeService].num}</span>
+
+                  {/* Icon box */}
+                  <div style={{
+                    width: '44px', height: '44px', borderRadius: '12px',
+                    backgroundColor: '#1e0a3c', border: '1px solid #2a1060',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: '20px'
+                  }}>
+                    <Play style={{ width: 18, height: 18, color: '#a78bfa', fill: '#a78bfa' }} />
+                  </div>
+
+                  {/* Title */}
+                  <h3 style={{ fontSize: '26px', fontWeight: 700, color: 'white', margin: '0 0 12px' }}>
+                    {SERVICES[activeService].title}
                   </h3>
-                  
-                  <div className="w-10 h-0.5 bg-purple-500 my-4"></div>
-                  
-                  <p className="text-gray-400 text-[15px] leading-relaxed relative z-10 mb-4">
-                    {servicesData[activeService].desc}
+
+                  {/* Divider */}
+                  <div style={{ width: '40px', height: '2px', backgroundColor: '#7c3aed', marginBottom: '16px' }} />
+
+                  {/* Description */}
+                  <p style={{ color: '#a1a1aa', fontSize: '15px', lineHeight: 1.7, margin: '0 0 24px' }}>
+                    {SERVICES[activeService].desc}
                   </p>
 
-                  <ul className="flex flex-col gap-3 relative z-10 mt-auto pt-4">
-                    {servicesData[activeService].bullets?.map((bullet, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        <Play className="w-[11px] h-[11px] text-purple-500 fill-purple-500 mt-1 shrink-0" />
-                        <span className="text-white text-[14px]">{bullet}</span>
+                  {/* Bullets */}
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {SERVICES[activeService].bullets.map((bullet, j) => (
+                      <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                        <Play style={{ width: 11, height: 11, color: '#7c3aed', fill: '#7c3aed', marginTop: '4px', flexShrink: 0 }} />
+                        <span style={{ color: '#d1d5db', fontSize: '14px', lineHeight: 1.5 }}>{bullet}</span>
                       </li>
                     ))}
                   </ul>
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
-          </motion.div>
-        </div>
-
+            </div>
+          </div>
         </div>
       </section>
-      </ErrorBoundary>
 
 
       
@@ -1760,7 +1824,7 @@ export default function App() {
                 onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}
               >About</button>
               <button 
-                onClick={() => document.getElementById('Services')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
                 className="text-[#9ca3af] text-sm hover:text-white transition-colors text-left font-medium w-fit cursor-none"
                 onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}
               >Services</button>
