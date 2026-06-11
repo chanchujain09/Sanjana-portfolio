@@ -5,7 +5,29 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'motion/react';
-import { Video, PlayCircle, Play, Film, Clock, Briefcase, Pencil, Pause, Palette, Mic, GraduationCap, Phone, Mail, MapPin, CheckCircle, Star, Quote, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, Heart, Globe, Scissors, Layers, Music, PenTool, Share2, TrendingUp, Instagram, Twitter, Music2, FileText, Sparkles, Download } from 'lucide-react';
+import { Video, PlayCircle, Play, Film, Clock, Briefcase, Pencil, Pause, Palette, Mic, GraduationCap, Phone, Mail, MapPin, CheckCircle, Star, Quote, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, Heart, Globe, Scissors, Layers, Music, PenTool, Share2, TrendingUp, Instagram, Twitter, Music2, FileText, Sparkles, Download, MonitorPlay } from 'lucide-react';
+
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
+  public state = { hasError: false };
+  public props: {children: React.ReactNode};
+
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.props = props;
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true };
+  }
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("Section Render Error", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return null; // Or a simple fallback fallback UI
+    }
+    return this.props.children; 
+  }
+}
 
 const GridOverlay = () => (
   <div 
@@ -819,6 +841,7 @@ export default function App() {
         </div>
       </section>
 
+      <ErrorBoundary>
        {/* About Me Section */}
       <section id="AboutMe" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] py-24 flex flex-col items-center overflow-hidden" ref={aboutRef}>
         <div className="relative z-10 w-full max-w-[1100px] mx-auto px-6 flex flex-col md:flex-row items-center gap-16">
@@ -926,10 +949,31 @@ export default function App() {
             {/* Social Icons row */}
             <div className="flex items-center gap-4 mt-6">
               {[
-                { icon: Instagram, name: "Instagram" },
-                { icon: Twitter, name: "Twitter" },
-                { icon: Music2, name: "TikTok" }
-              ].map((social, idx) => (
+                { 
+                  icon: (props: any) => (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                    </svg>
+                  ), 
+                  name: "Instagram" 
+                },
+                { 
+                  icon: (props: any) => (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" {...props}>
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                  ), 
+                  name: "Twitter" 
+                },
+                { 
+                  icon: (props: any) => (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+                      <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                    </svg>
+                  ), 
+                  name: "TikTok" 
+                }
+              ].map((social, idx) => social && (
                 <motion.button 
                   key={idx}
                   initial={{ opacity: 0, scale: 0.8 }} 
@@ -961,7 +1005,9 @@ export default function App() {
           </motion.div>
         </div>
       </section>
+      </ErrorBoundary>
 
+      <ErrorBoundary>
       {/* Portfolio / Selected Work Section */}
       <section id="Portfolio" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] py-24 flex flex-col items-center overflow-hidden">
         <div className="relative z-10 w-full flex flex-col items-center">
@@ -1051,6 +1097,7 @@ export default function App() {
         </div>
         </div>
       </section>
+      </ErrorBoundary>
 
       {/* Tools & Software Section */}
       <section id="Tools" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] py-24 flex flex-col items-center overflow-hidden">
@@ -1163,6 +1210,7 @@ export default function App() {
         </div>
       </section>
 
+      <ErrorBoundary>
       {/* Services Section */}
       <section id="Services" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] py-20 flex flex-col items-center overflow-hidden" ref={servicesRef}>
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full flex flex-col items-center">
@@ -1186,7 +1234,7 @@ export default function App() {
             transition={{ duration: 0.6 }}
             className="w-full lg:w-[40%] bg-[#111118] border border-[rgba(255,255,255,0.08)] rounded-2xl overflow-hidden divide-y divide-[rgba(255,255,255,0.08)]"
           >
-            {servicesData.map((service, idx) => (
+            {servicesData?.map((service, idx) => (
               <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')} 
                 key={idx}
                 onClick={() => setActiveService(idx)}
@@ -1198,10 +1246,10 @@ export default function App() {
               >
                 <div className="flex items-center">
                   <span className={`text-xs font-mono mr-4 ${activeService === idx ? 'text-purple-600' : 'text-gray-600'}`}>
-                    {service.num}
+                    {service?.num}
                   </span>
                   <span className={`text-[16px] font-medium transition-colors ${activeService === idx ? 'text-purple-400' : 'text-white'}`}>
-                    {service.title}
+                    {service?.title}
                   </span>
                 </div>
                 <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${activeService === idx ? 'rotate-90 text-purple-400' : 'text-gray-500'}`} />
@@ -1217,154 +1265,334 @@ export default function App() {
             className="w-full lg:w-[60%] relative min-h-[320px]"
           >
             <AnimatePresence mode="wait">
-              <motion.div
-                key={activeService}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.25 }}
-                className="bg-[#111118] border border-[rgba(255,255,255,0.08)] rounded-2xl p-9 relative overflow-hidden h-full flex flex-col w-full"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="w-[44px] h-[44px] rounded-xl bg-[#1e0a3c] border border-[#2a1060] flex items-center justify-center">
-                    {React.createElement(servicesData[activeService].icon, { className: "w-5 h-5 text-purple-500 fill-purple-500" })}
+              {servicesData?.[activeService] && (
+                <motion.div
+                  key={activeService}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.25 }}
+                  className="bg-[#111118] border border-[rgba(255,255,255,0.08)] rounded-2xl p-9 relative overflow-hidden h-full flex flex-col w-full"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="w-[44px] h-[44px] rounded-xl bg-[#1e0a3c] border border-[#2a1060] flex items-center justify-center">
+                      {React.createElement(servicesData[activeService].icon, { className: "w-5 h-5 text-purple-500 fill-purple-500" })}
+                    </div>
+                    <span className="text-[60px] font-bold text-[#2d1a5e] leading-none absolute top-6 right-8 pointer-events-none">
+                      {servicesData[activeService].num}
+                    </span>
                   </div>
-                  <span className="text-[60px] font-bold text-[#2d1a5e] leading-none absolute top-6 right-8 pointer-events-none">
-                    {servicesData[activeService].num}
-                  </span>
-                </div>
-                
-                <h3 className="text-[28px] font-bold text-white mt-4 relative z-10">
-                  {servicesData[activeService].title}
-                </h3>
-                
-                <div className="w-10 h-0.5 bg-purple-500 my-4"></div>
-                
-                <p className="text-gray-400 text-[15px] leading-relaxed relative z-10 mb-4">
-                  {servicesData[activeService].desc}
-                </p>
+                  
+                  <h3 className="text-[28px] font-bold text-white mt-4 relative z-10">
+                    {servicesData[activeService].title}
+                  </h3>
+                  
+                  <div className="w-10 h-0.5 bg-purple-500 my-4"></div>
+                  
+                  <p className="text-gray-400 text-[15px] leading-relaxed relative z-10 mb-4">
+                    {servicesData[activeService].desc}
+                  </p>
 
-                <ul className="flex flex-col gap-3 relative z-10 mt-auto pt-4">
-                  {servicesData[activeService].bullets.map((bullet, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <Play className="w-[11px] h-[11px] text-purple-500 fill-purple-500 mt-1 shrink-0" />
-                      <span className="text-white text-[14px]">{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
+                  <ul className="flex flex-col gap-3 relative z-10 mt-auto pt-4">
+                    {servicesData[activeService].bullets?.map((bullet, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <Play className="w-[11px] h-[11px] text-purple-500 fill-purple-500 mt-1 shrink-0" />
+                        <span className="text-white text-[14px]">{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              )}
             </AnimatePresence>
           </motion.div>
         </div>
 
         </div>
       </section>
+      </ErrorBoundary>
 
 
       
-
-
+      <ErrorBoundary>
       {/* Editing Services Section */}
       <section className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] pt-16 pb-0 overflow-hidden">
         <div className="relative z-10 w-full flex flex-col items-center">
           
           {/* Header */}
-          <div className="w-full max-w-[1100px] mb-8 relative z-10 px-6 lg:px-0">
+          <div className="w-full max-w-[1100px] mb-12 relative z-10 px-6 lg:px-0">
             <h2 className="text-4xl md:text-[52px] leading-tight font-[800] tracking-tight text-[#ffffff] text-left" onMouseEnter={() => setCursorVariant('text')} onMouseLeave={() => setCursorVariant('default')}>
               Editing services that move numbers —<br/>
               <span className="text-[#7c3aed] italic">not just pixels.</span>
             </h2>
           </div>
 
-          {/* Card Container */}
-          <div 
-            className="w-full max-w-[1100px] mx-6 lg:mx-0 bg-[#0d0d0d] border border-[#222222] rounded-[20px] min-h-[480px] overflow-hidden flex flex-col md:flex-row relative"
-            onMouseEnter={() => { setCursorVariant('play'); setCursorLabel('▶ Play'); }} 
-            onMouseLeave={() => { setCursorVariant('default'); setCursorLabel(''); }}
-          >
-            {/* Corner dots */}
-            <div className="absolute top-3 left-3 w-[10px] h-[10px] rounded-full bg-[#1a1a1a] border border-[#333] z-20"></div>
-            <div className="absolute top-3 right-3 w-[10px] h-[10px] rounded-full bg-[#1a1a1a] border border-[#333] z-20"></div>
-            <div className="absolute bottom-3 left-3 w-[10px] h-[10px] rounded-full bg-[#1a1a1a] border border-[#333] z-20"></div>
-            <div className="absolute bottom-3 right-3 w-[10px] h-[10px] rounded-full bg-[#1a1a1a] border border-[#333] z-20"></div>
-
-            {/* Left Column (48%) */}
+          <div className="flex flex-col gap-8 w-full max-w-[1100px] px-6 lg:px-0">
+            {/* Card Container 01 */}
             <div 
-              className="w-full md:w-[48%] p-8 md:p-10 relative overflow-hidden flex flex-col min-h-[400px] md:min-h-auto"
-              style={{ backgroundColor: '#0a0a0a', backgroundImage: 'radial-gradient(ellipse at bottom right, rgba(249,115,22,0.12) 0%, transparent 60%)' }}
+              className="w-full bg-[#0d0d0d] border border-[#222222] rounded-[24px] min-h-[480px] overflow-hidden flex flex-col md:flex-row relative group hover:border-purple-500/30 hover:shadow-[0_0_40px_rgba(124,58,237,0.1)] transition-all duration-500"
+              onMouseEnter={() => { setCursorVariant('play'); setCursorLabel('▶ Play'); }} 
+              onMouseLeave={() => { setCursorVariant('default'); setCursorLabel(''); }}
             >
-              {/* Typography */}
-              <div className="relative z-10 mt-4 md:mt-8">
-                <span className="block text-white text-[56px] md:text-[72px] font-[900] leading-none not-italic">REEL &</span>
-                <span className="block text-[#f97316] text-[56px] md:text-[72px] font-[900] leading-none mb-1">SHORTS</span>
-                <div className="inline-block relative">
-                  <span className="block text-white text-[42px] md:text-[56px] font-[900] leading-none">EDITING</span>
-                  <div className="w-full h-[4px] md:h-[6px] bg-white rounded-[3px] mt-1"></div>
-                </div>
-              </div>
-              
-              {/* Play Button */}
-              <div className="w-[56px] h-[56px] md:w-[64px] md:h-[64px] bg-white rounded-full flex items-center justify-center mt-6 relative z-10 self-start">
-                <Play className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-black fill-black ml-1" />
-              </div>
+              {/* Corner dots */}
+              <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-purple-500/50 transition-colors z-20"></div>
+              <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-purple-500/50 transition-colors z-20"></div>
+              <div className="absolute bottom-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-purple-500/50 transition-colors z-20"></div>
+              <div className="absolute bottom-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-purple-500/50 transition-colors z-20"></div>
 
-              {/* Decorative Timeline */}
-              <div className="absolute bottom-8 left-8 md:bottom-10 md:left-10 w-[180px] md:w-[200px] h-[48px] md:h-[56px] bg-[#111111] rounded-lg border border-[#222] p-2 md:p-2.5 flex items-center gap-1 z-10 hidden sm:flex">
-                <div className="h-[8px] md:h-[10px] w-[40px] md:w-[48px] bg-[#a855f7] rounded-[3px]"></div>
-                <div className="h-[8px] md:h-[10px] w-[40px] md:w-[48px] bg-[#22c55e] rounded-[3px]"></div>
-                <div className="h-[8px] md:h-[10px] w-[50px] md:w-[64px] bg-[#3b82f6] rounded-[3px]"></div>
-                <div className="h-[8px] md:h-[10px] w-[24px] md:w-[32px] bg-[#f97316] rounded-[3px]"></div>
-              </div>
-
-              {/* Phone Mockup */}
-              <div className="absolute right-[-20px] md:right-[-10px] bottom-[-20px] md:bottom-0 w-[160px] md:w-[180px] h-auto aspect-[9/16] rounded-[24px] md:rounded-[28px] border-[6px] md:border-[8px] border-[#1a1a1a] overflow-hidden z-10">
-                <img src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=400&auto=format&fit=crop" alt="Reels editing" className="w-full h-full object-cover opacity-100" />
-              </div>
-            </div>
-
-            {/* Right Column (52%) */}
-            <div className="w-full md:w-[52%] bg-transparent p-8 md:py-10 md:px-12 flex flex-col relative z-10">
-              <div className="flex justify-between items-start w-full">
-                <div className="w-[40px] h-[40px] md:w-[44px] md:h-[44px] rounded-[10px] bg-[#1a1a24] border border-[#2a2a3e] flex items-center justify-center">
-                  <Film className="w-4 h-4 md:w-5 md:h-5 text-[#7c3aed]" />
-                </div>
-                <span className="text-[64px] md:text-[80px] font-[800] leading-none text-[#2a2a2a] select-none">
-                  01
-                </span>
-              </div>
-
-              <h3 className="text-3xl md:text-[38px] font-bold text-white mt-4 md:mt-6 leading-tight">
-                Reel & Shorts Editing
-              </h3>
-              
-              <p className="text-[#a1a1aa] text-[14px] md:text-[15px] leading-relaxed mt-3 max-w-[420px]">
-                Turn raw clips into engaging vertical videos tailored for Reels, Shorts, and TikTok. Fast-paced cuts, snappy captions, and trending effects made to boost engagement and brand growth.
-              </p>
-
-              <ul className="flex flex-col gap-3 mt-6">
-                {[
-                  "Dynamic Editing + Flow Optimization",
-                  "Captions & Subtitles Included",
-                  "Trendy Transitions & Sound Sync",
-                  "Optimized Videos (Reels, Shorts)"
-                ].map((bullet, idx) => (
-                  <li key={idx} className="flex items-center gap-3">
-                    <CheckCircle className="w-4 h-4 text-[#7c3aed] shrink-0" />
-                    <span className="text-white text-[13px] md:text-[14px]">{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}  
-                onClick={() => document.getElementById('Contact')?.scrollIntoView({ behavior: 'smooth' })}
-                className="mt-8 bg-white text-[#0a0a0f] hover:bg-gray-100 rounded-full px-6 py-3 text-[14px] md:text-[15px] font-medium transition-colors self-start flex items-center gap-2"
+              {/* Left Column (48%) */}
+              <div 
+                className="w-full md:w-[48%] p-8 md:p-12 relative overflow-hidden flex flex-col min-h-[400px] md:min-h-auto"
+                style={{ backgroundColor: '#0a0a0a', backgroundImage: 'radial-gradient(ellipse at bottom right, rgba(249,115,22,0.12) 0%, transparent 60%)' }}
               >
-                Contact us <ArrowRight className="w-4 h-4" />
-              </button>
+                {/* Typography */}
+                <div className="relative z-10 mt-4 md:mt-8">
+                  <span className="block text-white text-[56px] md:text-[72px] font-[900] leading-none not-italic">REEL &</span>
+                  <span className="block text-[#f97316] text-[56px] md:text-[72px] font-[900] leading-none mb-1">SHORTS</span>
+                  <div className="inline-block relative">
+                    <span className="block text-white text-[42px] md:text-[56px] font-[900] leading-none">EDITING</span>
+                    <div className="w-full h-[4px] md:h-[6px] bg-white rounded-[3px] mt-1"></div>
+                  </div>
+                </div>
+                
+                {/* Play Button */}
+                <div className="w-[56px] h-[56px] md:w-[64px] md:h-[64px] bg-white rounded-full flex items-center justify-center mt-6 relative z-10 self-start group-hover:scale-110 transition-transform duration-500">
+                  <Play className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-black fill-black ml-1" />
+                </div>
+
+                {/* Decorative Timeline */}
+                <div className="absolute bottom-8 left-8 md:bottom-10 md:left-10 w-[180px] md:w-[200px] h-[48px] md:h-[56px] bg-[#111111] rounded-lg border border-[#222] p-2 md:p-2.5 flex items-center gap-1 z-10 hidden sm:flex opacity-80 group-hover:opacity-100 transition-opacity">
+                  <div className="h-[8px] md:h-[10px] w-[40px] md:w-[48px] bg-[#a855f7] rounded-[3px]"></div>
+                  <div className="h-[8px] md:h-[10px] w-[40px] md:w-[48px] bg-[#22c55e] rounded-[3px]"></div>
+                  <div className="h-[8px] md:h-[10px] w-[50px] md:w-[64px] bg-[#3b82f6] rounded-[3px]"></div>
+                  <div className="h-[8px] md:h-[10px] w-[24px] md:w-[32px] bg-[#f97316] rounded-[3px]"></div>
+                </div>
+
+                {/* Phone Mockup */}
+                <div className="absolute right-[-20px] md:right-[-10px] bottom-[-20px] md:bottom-0 w-[160px] md:w-[180px] h-auto aspect-[9/16] rounded-[24px] md:rounded-[28px] border-[6px] md:border-[8px] border-[#1a1a1a] overflow-hidden z-10 group-hover:-translate-y-4 transition-transform duration-500">
+                  <img src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=400&auto=format&fit=crop" alt="Reels editing" className="w-full h-full object-cover" />
+                </div>
+              </div>
+
+              {/* Right Column (52%) */}
+              <div className="w-full md:w-[52%] bg-transparent p-8 md:py-12 md:px-14 flex flex-col relative z-10 justify-center">
+                <div className="flex justify-between items-start w-full">
+                  <div className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] rounded-xl bg-[#1a1a24] border border-[#2a2a3e] flex items-center justify-center group-hover:bg-purple-500/20 group-hover:border-purple-500/50 transition-colors">
+                    <Film className="w-4 h-4 md:w-5 md:h-5 text-[#7c3aed]" />
+                  </div>
+                  <span className="text-[64px] md:text-[80px] font-[800] leading-none text-[#1a1a1a] select-none group-hover:text-[#222] transition-colors">
+                    01
+                  </span>
+                </div>
+
+                <h3 className="text-3xl md:text-[40px] font-bold text-white mt-4 md:mt-6 leading-tight">
+                  Reel & Shorts Editing
+                </h3>
+                
+                <p className="text-[#a1a1aa] text-[14px] md:text-[16px] leading-relaxed mt-4 max-w-[420px]">
+                  Turn raw clips into engaging vertical videos tailored for Reels, Shorts, and TikTok. Fast-paced cuts, snappy captions, and trending effects made to boost engagement and brand growth.
+                </p>
+
+                <ul className="flex flex-col gap-3.5 mt-8">
+                  {[
+                    "Dynamic Editing + Flow Optimization",
+                    "Captions & Subtitles Included",
+                    "Trendy Transitions & Sound Sync",
+                    "Optimized Videos (Reels, Shorts)"
+                  ].map((bullet, idx) => (
+                    <li key={idx} className="flex items-center gap-4">
+                      <CheckCircle className="w-5 h-5 text-[#7c3aed] shrink-0" />
+                      <span className="text-gray-300 text-[14px] md:text-[15px] font-medium">{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}  
+                  onClick={() => document.getElementById('Contact')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="mt-10 bg-white text-[#0a0a0f] hover:bg-gray-200 rounded-full px-8 py-3.5 text-[14px] md:text-[15px] font-bold transition-all self-start flex items-center gap-2"
+                >
+                  Contact us <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
+
+            {/* Card Container 02 */}
+            <div 
+              className="w-full bg-[#0d0d0d] border border-[#222222] rounded-[24px] min-h-[480px] overflow-hidden flex flex-col md:flex-row-reverse relative group hover:border-blue-500/30 hover:shadow-[0_0_40px_rgba(59,130,246,0.1)] transition-all duration-500"
+              onMouseEnter={() => { setCursorVariant('play'); setCursorLabel('▶ Play'); }} 
+              onMouseLeave={() => { setCursorVariant('default'); setCursorLabel(''); }}
+            >
+              {/* Corner dots */}
+              <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-blue-500/50 transition-colors z-20"></div>
+              <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-blue-500/50 transition-colors z-20"></div>
+              <div className="absolute bottom-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-blue-500/50 transition-colors z-20"></div>
+              <div className="absolute bottom-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-blue-500/50 transition-colors z-20"></div>
+
+              {/* Right/Visual Column (48%) */}
+              <div 
+                className="w-full md:w-[48%] p-8 md:p-12 relative overflow-hidden flex flex-col min-h-[400px] md:min-h-auto"
+                style={{ backgroundColor: '#0a0a0a', backgroundImage: 'radial-gradient(ellipse at bottom left, rgba(59,130,246,0.12) 0%, transparent 60%)' }}
+              >
+                {/* Typography */}
+                <div className="relative z-10 mt-4 md:mt-8">
+                  <span className="block text-white text-[56px] md:text-[72px] font-[900] leading-none not-italic">YOUTUBE</span>
+                  <span className="block text-[#3b82f6] text-[56px] md:text-[72px] font-[900] leading-none mb-1">LONG FORM</span>
+                  <div className="inline-block relative">
+                    <span className="block text-white text-[42px] md:text-[56px] font-[900] leading-none">EDITING</span>
+                    <div className="w-full h-[4px] md:h-[6px] bg-white rounded-[3px] mt-1"></div>
+                  </div>
+                </div>
+                
+                {/* Play Button */}
+                <div className="w-[56px] h-[56px] md:w-[64px] md:h-[64px] bg-white rounded-full flex items-center justify-center mt-6 relative z-10 self-start group-hover:scale-110 transition-transform duration-500">
+                  <Play className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-black fill-black ml-1" />
+                </div>
+
+                {/* Desktop Mockup */}
+                <div className="absolute right-[-40px] md:right-[-60px] bottom-[-20px] md:bottom-[-30px] w-[300px] md:w-[400px] h-auto aspect-video rounded-[16px] md:rounded-[20px] border-[6px] md:border-[8px] border-[#1a1a1a] overflow-hidden z-10 group-hover:-translate-x-4 transition-transform duration-500 shadow-2xl">
+                  <img src="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?q=80&w=600&auto=format&fit=crop" alt="YouTube editing" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                     <div className="w-12 h-12 bg-red-600 rounded-[12px] flex items-center justify-center shadow-lg">
+                        <Play className="w-6 h-6 text-white fill-white ml-1" />
+                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Left/Text Column (52%) */}
+              <div className="w-full md:w-[52%] bg-transparent p-8 md:py-12 md:px-14 flex flex-col relative z-10 justify-center">
+                <div className="flex justify-between items-start w-full">
+                  <div className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] rounded-xl bg-[#1a1a24] border border-[#2a2a3e] flex items-center justify-center group-hover:bg-blue-500/20 group-hover:border-blue-500/50 transition-colors">
+                    <MonitorPlay className="w-4 h-4 md:w-5 md:h-5 text-[#3b82f6]" />
+                  </div>
+                  <span className="text-[64px] md:text-[80px] font-[800] leading-none text-[#1a1a1a] select-none group-hover:text-[#222] transition-colors">
+                    02
+                  </span>
+                </div>
+
+                <h3 className="text-3xl md:text-[40px] font-bold text-white mt-4 md:mt-6 leading-tight">
+                  YouTube Videos
+                </h3>
+                
+                <p className="text-[#a1a1aa] text-[14px] md:text-[16px] leading-relaxed mt-4 max-w-[420px]">
+                  Keep your audience hooked from intro to outro. Professional long-form video editing that focuses on deep storytelling, retention pacing, and cinematic color grading.
+                </p>
+
+                <ul className="flex flex-col gap-3.5 mt-8">
+                  {[
+                    "Retention-Focused Hook Editing",
+                    "A-Roll & B-Roll Assembly",
+                    "Cinematic Color Grading",
+                    "Audio Mixing & Sound Design"
+                  ].map((bullet, idx) => (
+                    <li key={idx} className="flex items-center gap-4">
+                      <CheckCircle className="w-5 h-5 text-[#3b82f6] shrink-0" />
+                      <span className="text-gray-300 text-[14px] md:text-[15px] font-medium">{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}  
+                  onClick={() => document.getElementById('Contact')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="mt-10 bg-white text-[#0a0a0f] hover:bg-gray-200 rounded-full px-8 py-3.5 text-[14px] md:text-[15px] font-bold transition-all self-start flex items-center gap-2"
+                >
+                  Get Started <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Card Container 03 */}
+            <div 
+              className="w-full bg-[#0d0d0d] border border-[#222222] rounded-[24px] min-h-[480px] overflow-hidden flex flex-col md:flex-row relative group hover:border-emerald-500/30 hover:shadow-[0_0_40px_rgba(16,185,129,0.1)] transition-all duration-500"
+              onMouseEnter={() => { setCursorVariant('play'); setCursorLabel('▶ Play'); }} 
+              onMouseLeave={() => { setCursorVariant('default'); setCursorLabel(''); }}
+            >
+              {/* Corner dots */}
+              <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-emerald-500/50 transition-colors z-20"></div>
+              <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-emerald-500/50 transition-colors z-20"></div>
+              <div className="absolute bottom-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-emerald-500/50 transition-colors z-20"></div>
+              <div className="absolute bottom-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-emerald-500/50 transition-colors z-20"></div>
+
+              {/* Left/Visual Column (48%) */}
+              <div 
+                className="w-full md:w-[48%] p-8 md:p-12 relative overflow-hidden flex flex-col min-h-[400px] md:min-h-auto"
+                style={{ backgroundColor: '#0a0a0a', backgroundImage: 'radial-gradient(ellipse at bottom right, rgba(16,185,129,0.12) 0%, transparent 60%)' }}
+              >
+                {/* Typography */}
+                <div className="relative z-10 mt-4 md:mt-8">
+                  <span className="block text-white text-[56px] md:text-[72px] font-[900] leading-none not-italic">PODCAST &</span>
+                  <span className="block text-[#10b981] text-[56px] md:text-[72px] font-[900] leading-none mb-1">INTERVIEW</span>
+                  <div className="inline-block relative">
+                    <span className="block text-white text-[42px] md:text-[56px] font-[900] leading-none">EDITING</span>
+                    <div className="w-full h-[4px] md:h-[6px] bg-white rounded-[3px] mt-1"></div>
+                  </div>
+                </div>
+                
+                {/* Play Button */}
+                <div className="w-[56px] h-[56px] md:w-[64px] md:h-[64px] bg-white rounded-full flex items-center justify-center mt-6 relative z-10 self-start group-hover:scale-110 transition-transform duration-500">
+                  <Play className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-black fill-black ml-1" />
+                </div>
+
+                {/* Podcast Graphic Mockup */}
+                <div className="absolute right-[-40px] md:right-[-60px] bottom-[-20px] md:bottom-[-30px] w-[300px] md:w-[400px] h-auto aspect-video rounded-[16px] md:rounded-[20px] border-[6px] md:border-[8px] border-[#1a1a1a] overflow-hidden z-10 group-hover:-translate-y-4 transition-transform duration-500 shadow-2xl">
+                  <img src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop" alt="Podcast editing" className="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 transition-all duration-500" />
+                  <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/90 to-transparent flex flex-col justify-end p-6 md:p-8">
+                    <div className="w-full h-1.5 md:h-2 bg-white/20 rounded-full mb-3 overflow-hidden">
+                      <div className="w-[65%] h-full bg-[#10b981] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
+                    </div>
+                    <div className="flex justify-between text-white text-[10px] md:text-xs font-mono font-medium">
+                      <span>24:15</span>
+                      <span>45:30</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right/Text Column (52%) */}
+              <div className="w-full md:w-[52%] bg-transparent p-8 md:py-12 md:px-14 flex flex-col relative z-10 justify-center">
+                <div className="flex justify-between items-start w-full">
+                  <div className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] rounded-xl bg-[#1a1a24] border border-[#2a2a3e] flex items-center justify-center group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 transition-colors">
+                    <Mic className="w-4 h-4 md:w-5 md:h-5 text-[#10b981]" />
+                  </div>
+                  <span className="text-[64px] md:text-[80px] font-[800] leading-none text-[#1a1a1a] select-none group-hover:text-[#222] transition-colors">
+                    03
+                  </span>
+                </div>
+
+                <h3 className="text-3xl md:text-[40px] font-bold text-white mt-4 md:mt-6 leading-tight">
+                  Podcast & Interviews
+                </h3>
+                
+                <p className="text-[#a1a1aa] text-[14px] md:text-[16px] leading-relaxed mt-4 max-w-[420px]">
+                  Multi-camera sync, dead air removal, and pristine audio leveling. We deliver polished podcast episodes ready for Spotify, Apple Podcasts, and YouTube.
+                </p>
+
+                <ul className="flex flex-col gap-3.5 mt-8">
+                  {[
+                    "Multi-Cam Switching & Syncing",
+                    "Advanced Audio Cleanup & EQ",
+                    "Lower Thirds & Branding",
+                    "Micro-Content Extraction (Shorts)"
+                  ].map((bullet, idx) => (
+                    <li key={idx} className="flex items-center gap-4">
+                      <CheckCircle className="w-5 h-5 text-[#10b981] shrink-0" />
+                      <span className="text-gray-300 text-[14px] md:text-[15px] font-medium">{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}  
+                  onClick={() => document.getElementById('Contact')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="mt-10 bg-white text-[#0a0a0f] hover:bg-gray-200 rounded-full px-8 py-3.5 text-[14px] md:text-[15px] font-bold transition-all self-start flex items-center gap-2"
+                >
+                  Book Service <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
+      </ErrorBoundary>
 
       {/* CTA & Contact Section */}
       <section id="Contact" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] py-32 overflow-hidden flex justify-center">
