@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'motion/react';
-import { Video, PlayCircle, Play, Film, Clock, Briefcase, Pencil, Pause, Palette, Mic, GraduationCap, Phone, Mail, MapPin, CheckCircle, Star, Quote, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, Heart, Globe, Scissors, Layers, Music, PenTool, Share2, TrendingUp, Instagram, Twitter, Music2, FileText, Sparkles, Download, MonitorPlay } from 'lucide-react';
+import { Video, PlayCircle, Play, Film, Clock, Briefcase, Pencil, Pause, Palette, Mic, GraduationCap, Phone, Mail, MapPin, CheckCircle, Star, Quote, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, Heart, Globe, Scissors, Layers, Music, PenTool, Share2, TrendingUp, Instagram, Twitter, Music2, FileText, Sparkles, Download, MonitorPlay, Volume2, VolumeX } from 'lucide-react';
 
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
   public state = { hasError: false };
@@ -27,6 +27,219 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
     }
     return this.props.children; 
   }
+}
+
+const VimeoCard = ({ videoId, title, category, badge, onCursorEnter, onCursorLeave }: {
+  videoId: string;
+  title: string;
+  category: string;
+  badge: string;
+  onCursorEnter?: () => void;
+  onCursorLeave?: () => void;
+}) => {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const playerRef = useRef<any>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      if (attempts > 30) { clearInterval(interval); return; }
+      if ((window as any).Vimeo && iframeRef.current) {
+        clearInterval(interval);
+        try {
+          const p = new (window as any).Vimeo.Player(iframeRef.current);
+          p.ready().then(() => {
+            playerRef.current = p;
+            p.setMuted(false);
+            p.setVolume(1);
+          }).catch(() => {});
+        } catch(e) {}
+      }
+    }, 300);
+    return () => clearInterval(interval);
+  }, [videoId]);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    onCursorEnter?.();
+    setIsPlaying(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    onCursorLeave?.();
+  };
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!playerRef.current) return;
+    if (isMuted) {
+      playerRef.current.setVolume(1).then(() => {
+        playerRef.current.setMuted(false);
+      }).catch(() => {});
+      setIsMuted(false);
+    } else {
+      playerRef.current.setVolume(0).then(() => {
+        playerRef.current.setMuted(true);
+      }).catch(() => {});
+      setIsMuted(true);
+    }
+  };
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!playerRef.current) return;
+    if (isPlaying) {
+      playerRef.current.pause().catch(() => {});
+      setIsPlaying(false);
+    } else {
+      playerRef.current.play().catch(() => {});
+      setIsPlaying(true);
+    }
+  };
+
+  return (
+    <div
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        border: `1px solid ${isHovered ? 'rgba(124,58,237,0.6)' : '#1f1f2e'}`,
+        backgroundColor: '#111118',
+        transition: 'border-color 300ms, transform 300ms, box-shadow 300ms',
+        transform: isHovered ? 'scale(1.02)' : 'scale(1)',
+        boxShadow: isHovered ? '0 0 30px rgba(124,58,237,0.2)' : 'none',
+        cursor: 'none',
+        zIndex: isHovered ? 20 : 1
+      }}
+    >
+      {/* Loading spinner */}
+      {!isLoaded && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 5,
+          backgroundColor: '#111118',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '50%',
+            border: '2px solid rgba(124,58,237,0.3)',
+            borderTopColor: '#7c3aed',
+            animation: 'spin 0.8s linear infinite'
+          }} />
+        </div>
+      )}
+
+      {/* Iframe fills entire card */}
+      <iframe
+        ref={iframeRef}
+        src={`https://player.vimeo.com/video/${videoId}?badge=0&autopause=0&player_id=0&app_id=58479&loop=1&muted=0&autoplay=1&background=1`}
+        frameBorder="0"
+        allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+        referrerPolicy="strict-origin-when-cross-origin"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          width: '100%',
+          height: '100%',
+          transform: 'translate(-50%, -50%) scale(1.6)',
+          border: 'none',
+          pointerEvents: 'none'
+        }}
+        title={title}
+      />
+
+      {/* Gradient overlay */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)',
+        zIndex: 2
+      }} />
+
+      {/* Stat badge top-left */}
+      <div style={{
+        position: 'absolute', top: '14px', left: '14px', zIndex: 10,
+        display: 'flex', alignItems: 'center', gap: '6px',
+        backgroundColor: 'rgba(0,0,0,0.65)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: '999px', padding: '4px 10px'
+      }}>
+        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#7c3aed' }} />
+        <span style={{ color: 'white', fontSize: '11px', fontWeight: 600 }}>{badge}</span>
+      </div>
+
+      {/* Sound ON indicator */}
+      {!isMuted && isPlaying && (
+        <div style={{
+          position: 'absolute', top: '14px', right: '14px', zIndex: 10,
+          display: 'flex', alignItems: 'center', gap: '5px',
+          backgroundColor: 'rgba(124,58,237,0.85)',
+          borderRadius: '999px', padding: '3px 10px'
+        }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'white', animation: 'pulse 1s infinite' }} />
+          <span style={{ color: 'white', fontSize: '10px', fontWeight: 700 }}>SOUND ON</span>
+        </div>
+      )}
+
+      {/* Controls on hover */}
+      <div style={{
+        position: 'absolute', bottom: '52px', right: '14px',
+        display: 'flex', gap: '8px', zIndex: 10,
+        opacity: isHovered ? 1 : 0,
+        transform: isHovered ? 'translateY(0)' : 'translateY(10px)',
+        transition: 'opacity 250ms, transform 250ms'
+      }}>
+        <button onClick={togglePlay} style={{
+          width: '34px', height: '34px', borderRadius: '50%',
+          backgroundColor: 'rgba(0,0,0,0.75)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          color: 'white', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', cursor: 'none'
+        }}>
+          {isPlaying
+            ? <Pause style={{ width: 13, height: 13, fill: 'white', color: 'white' }} />
+            : <Play style={{ width: 13, height: 13, fill: 'white', color: 'white', marginLeft: '1px' }} />
+          }
+        </button>
+        <button onClick={toggleMute} style={{
+          width: '34px', height: '34px', borderRadius: '50%',
+          backgroundColor: isMuted ? 'rgba(0,0,0,0.75)' : 'rgba(124,58,237,0.85)',
+          backdropFilter: 'blur(8px)',
+          border: `1px solid ${isMuted ? 'rgba(255,255,255,0.2)' : 'rgba(124,58,237,0.8)'}`,
+          color: 'white', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', cursor: 'none',
+          transition: 'background 200ms'
+        }}>
+          {isMuted
+            ? <VolumeX style={{ width: 13, height: 13, color: 'white' }} />
+            : <Volume2 style={{ width: 13, height: 13, color: 'white' }} />
+          }
+        </button>
+      </div>
+
+      {/* Title bottom-left */}
+      <div style={{ position: 'absolute', bottom: '14px', left: '14px', right: '64px', zIndex: 10 }}>
+        <p style={{ color: 'white', fontSize: '14px', fontWeight: 700, margin: '0 0 2px' }}>{title}</p>
+        <p style={{ color: '#9ca3af', fontSize: '12px', margin: 0 }}>{category}</p>
+      </div>
+    </div>
+  );
 }
 
 const GridOverlay = () => (
@@ -114,6 +327,15 @@ export default function App() {
   const [trailPos, setTrailPos] = useState({ x: 0, y: 0 });
   const [cursorLabel, setCursorLabel] = useState('');
   const [showResume, setShowResume] = useState(false);
+
+  useEffect(() => {
+    if (!document.querySelector('script[src="https://player.vimeo.com/api/player.js"]')) {
+      const s = document.createElement('script');
+      s.src = 'https://player.vimeo.com/api/player.js';
+      s.async = false;
+      document.head.insertBefore(s, document.head.firstChild);
+    }
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -357,7 +579,7 @@ export default function App() {
 
 
       {showResume ? (
-        <main className="relative w-full border-t border-[rgba(255,255,255,0.05)] pt-32 pb-24 min-h-screen flex flex-col items-center overflow-hidden">
+        <main className="relative w-full border-t border-[rgba(255,255,255,0.05)] pt-[96px] pb-[96px] min-h-screen flex flex-col items-center overflow-hidden">
           <motion.div
             initial={{ opacity:0, y:30 }}
             animate={{ opacity:1, y:0 }}
@@ -525,7 +747,7 @@ export default function App() {
           </motion.div>
         </main>
       ) : showAllProjects ? (
-        <main className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] pt-32 pb-24 min-h-screen flex flex-col items-center overflow-hidden">
+        <main className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] pt-[96px] pb-[96px] min-h-screen flex flex-col items-center overflow-hidden">
           <div className="relative z-10 max-w-7xl mx-auto px-6 w-full flex flex-col items-start gap-8">
             <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}  
               onClick={() => setShowAllProjects(false)}
@@ -585,7 +807,7 @@ export default function App() {
         </main>
       ) : (
         <>
-          <main className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] overflow-hidden">
+          <main className="relative w-full bg-transparent overflow-hidden">
         
         {/* Hero Glow */}
         <div 
@@ -593,7 +815,7 @@ export default function App() {
           style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.28) 0%, transparent 65%)' }}
         />
 
-        <div className="relative z-10 w-full min-h-screen pt-40 pb-20 flex flex-col items-center flex-1">
+        <div className="relative z-10 w-full min-h-screen pt-[120px] pb-[80px] flex flex-col items-center flex-1">
           {/* Top Badge */}
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2, duration:0.5 }} className="px-4 py-1.5 rounded-full border border-[rgba(255,255,255,0.08)] bg-[#111118] text-white text-[13px] font-medium flex items-center gap-2 mb-6">
             <Video className="w-3.5 h-3.5" />
@@ -661,21 +883,72 @@ export default function App() {
             />
 
             {/* Left Phone */}
-            <motion.div initial={{ opacity:0, x:-60 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.9, duration:0.7 }} className="relative w-[280px] shrink-0 aspect-[9/16] rounded-[40px] border-[6px] border-[#111111] bg-[#111111] overflow-hidden transform -rotate-[14deg] translate-y-[60px] z-10 shadow-2xl hidden md:block" onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}>
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[80px] h-[20px] bg-[#111111] rounded-full z-20"></div>
-              <img src="https://images.unsplash.com/photo-1605406575497-015ab0d21b9b?q=80&w=600&auto=format&fit=crop" alt="Left project" className="w-full h-full object-cover opacity-75" />
+            <motion.div initial={{ opacity:0, x:-60 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.9, duration:0.7 }} 
+              className="relative w-[300px] shrink-0 aspect-[9/19] overflow-visible transform -rotate-[14deg] translate-y-[60px] z-10 shadow-2xl hidden md:block" 
+              style={{
+                border: '8px solid #1a1a1a',
+                borderRadius: '52px',
+                boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08), 0 30px 80px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.05)',
+                backgroundColor: '#000000'
+              }}
+              onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}>
+              
+              <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', width: '120px', height: '34px', backgroundColor: '#000000', borderRadius: '20px', zIndex: 10 }} />
+              <div style={{ position: 'absolute', left: '-10px', top: '120px', width: '3px', height: '32px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', left: '-10px', top: '162px', width: '3px', height: '32px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', left: '-10px', top: '80px', width: '3px', height: '20px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', right: '-10px', top: '140px', width: '3px', height: '52px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', bottom: '8px', left: '50%', transform: 'translateX(-50%)', width: '120px', height: '4px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '4px', zIndex: 10 }} />
+              
+              <div style={{ borderRadius: '44px', width: '100%', height: '100%', overflow: 'hidden', position: 'relative', backgroundColor: '#111111' }}>
+                <img src="https://images.unsplash.com/photo-1605406575497-015ab0d21b9b?q=80&w=600&auto=format&fit=crop" alt="Left project" className="w-full h-full object-cover opacity-75" />
+              </div>
             </motion.div>
 
             {/* Center Phone */}
-            <motion.div initial={{ opacity:0, y:60 }} animate={{ opacity:1, y:0 }} transition={{ delay:1.0, duration:0.7 }} className="relative w-[340px] shrink-0 aspect-[9/16] rounded-[44px] border-[6px] border-[#111111] bg-[#111111] overflow-hidden z-20 md:-ml-[40px] shadow-2xl shadow-black/80" onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}>
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[80px] h-[20px] bg-[#111111] rounded-full z-20"></div>
-              <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600&auto=format&fit=crop" alt="Center project" className="w-full h-full object-cover opacity-100" />
+            <motion.div initial={{ opacity:0, y:60 }} animate={{ opacity:1, y:0 }} transition={{ delay:1.0, duration:0.7 }} 
+              className="relative w-[300px] shrink-0 aspect-[9/19] z-20 md:-ml-[40px] shadow-2xl shadow-black/80" 
+              style={{
+                border: '8px solid #1a1a1a',
+                borderRadius: '52px',
+                boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08), 0 30px 80px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.05)',
+                backgroundColor: '#000000'
+              }}
+              onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}>
+              
+              <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', width: '120px', height: '34px', backgroundColor: '#000000', borderRadius: '20px', zIndex: 10 }} />
+              <div style={{ position: 'absolute', left: '-10px', top: '120px', width: '3px', height: '32px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', left: '-10px', top: '162px', width: '3px', height: '32px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', left: '-10px', top: '80px', width: '3px', height: '20px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', right: '-10px', top: '140px', width: '3px', height: '52px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', bottom: '8px', left: '50%', transform: 'translateX(-50%)', width: '120px', height: '4px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '4px', zIndex: 10 }} />
+
+              <div style={{ borderRadius: '44px', width: '100%', height: '100%', overflow: 'hidden', position: 'relative', backgroundColor: '#111111' }}>
+                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600&auto=format&fit=crop" alt="Center project" className="w-full h-full object-cover opacity-100" />
+              </div>
             </motion.div>
 
             {/* Right Phone */}
-            <motion.div initial={{ opacity:0, x:60 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.9, duration:0.7 }} className="relative w-[280px] shrink-0 aspect-[9/16] rounded-[40px] border-[6px] border-[#111111] bg-[#111111] overflow-hidden transform rotate-[14deg] translate-y-[60px] z-10 md:-ml-[40px] shadow-2xl hidden md:block" onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}>
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[80px] h-[20px] bg-[#111111] rounded-full z-20"></div>
-              <img src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=600&auto=format&fit=crop" alt="Right project" className="w-full h-full object-cover opacity-75" />
+            <motion.div initial={{ opacity:0, x:60 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.9, duration:0.7 }} 
+              className="relative w-[300px] shrink-0 aspect-[9/19] transform rotate-[14deg] translate-y-[60px] z-10 md:-ml-[40px] shadow-2xl hidden md:block" 
+              style={{
+                border: '8px solid #1a1a1a',
+                borderRadius: '52px',
+                boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08), 0 30px 80px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.05)',
+                backgroundColor: '#000000'
+              }}
+              onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}>
+              
+              <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', width: '120px', height: '34px', backgroundColor: '#000000', borderRadius: '20px', zIndex: 10 }} />
+              <div style={{ position: 'absolute', left: '-10px', top: '120px', width: '3px', height: '32px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', left: '-10px', top: '162px', width: '3px', height: '32px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', left: '-10px', top: '80px', width: '3px', height: '20px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', right: '-10px', top: '140px', width: '3px', height: '52px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', bottom: '8px', left: '50%', transform: 'translateX(-50%)', width: '120px', height: '4px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '4px', zIndex: 10 }} />
+
+              <div style={{ borderRadius: '44px', width: '100%', height: '100%', overflow: 'hidden', position: 'relative', backgroundColor: '#111111' }}>
+                <img src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=600&auto=format&fit=crop" alt="Right project" className="w-full h-full object-cover opacity-75" />
+              </div>
             </motion.div>
 
             {/* Floating Badges */}
@@ -716,7 +989,7 @@ export default function App() {
           </motion.div>
 
           {/* Stats Ticker */}
-          <div className="w-full max-w-4xl mx-auto flex flex-row flex-nowrap justify-center sm:justify-between items-center gap-4 sm:gap-0 mt-8 px-6 relative z-20 pb-20 overflow-x-auto [scrollbar-width:none]">
+          <div className="w-full max-w-4xl mx-auto flex flex-row flex-nowrap justify-center sm:justify-between items-center gap-4 sm:gap-0 mt-0 px-6 relative z-20 pt-0 pb-0 mb-0 overflow-x-auto [scrollbar-width:none]">
              {[
                "500+ Videos Edited",
                "2+ Years Experience",
@@ -734,7 +1007,7 @@ export default function App() {
       </main>
 
       {/* Experience Section */}
-      <section id="Experience" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] py-16 flex flex-col items-center overflow-hidden">
+      <section id="Experience" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] pt-[96px] pb-[96px] flex flex-col items-center overflow-hidden">
         <div className="relative z-10 max-w-5xl mx-auto px-6 w-full flex flex-col items-start">
           {/* Header */}
           <div className="mb-8">
@@ -843,7 +1116,7 @@ export default function App() {
 
       <ErrorBoundary>
        {/* About Me Section */}
-      <section id="AboutMe" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] py-24 flex flex-col items-center overflow-hidden" ref={aboutRef}>
+      <section id="AboutMe" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] pt-[96px] pb-[96px] flex flex-col items-center overflow-hidden" ref={aboutRef}>
         <div className="relative z-10 w-full max-w-[1100px] mx-auto px-6 flex flex-col md:flex-row items-center gap-16">
           
           {/* Left Column */}
@@ -1009,7 +1282,7 @@ export default function App() {
 
       <ErrorBoundary>
       {/* Portfolio / Selected Work Section */}
-      <section id="Portfolio" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] py-24 flex flex-col items-center overflow-hidden">
+      <section id="Portfolio" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] pt-[96px] pb-[96px] flex flex-col items-center overflow-hidden">
         <div className="relative z-10 w-full flex flex-col items-center">
         {/* Glow */}
         <div 
@@ -1046,45 +1319,34 @@ export default function App() {
 
         {/* Masonry Grid Area */}
         <div className="w-full max-w-5xl mx-auto px-6 relative z-10">
-          <motion.div layout className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
-            <AnimatePresence mode="popLayout">
-              {portfolioCards
-                .filter(card => activeFilter === 'All' || card.category === activeFilter)
-                .map((card) => (
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0, scale: 0.92 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.92 }}
-                    transition={{ duration: 0.3 }}
-                    key={card.id}
-                    className="relative bg-[#111118] border border-[rgba(255,255,255,0.08)] rounded-[16px] overflow-hidden group cursor-pointer hover:border-purple-500/50 hover:shadow-[0_0_30px_rgba(124,58,237,0.15)] transition-all duration-300 transform hover:scale-[1.02] flex flex-col"
-                  >
-                    {/* Image Area */}
-                    <div className="relative w-full h-[550px] overflow-hidden bg-transparent">
-                      <img 
-                        src={card.image} 
-                        alt={card.creator}
-                        className="w-full h-full object-cover opacity-85 grayscale group-hover:grayscale-0 transition-all duration-500"
-                      />
-                      
-                      {/* Optional Overlay Text */}
-                      {card.overlayText && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <span className={card.overlayStyle}>{card.overlayText}</span>
-                        </div>
-                      )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3" style={{ gridAutoRows: '600px', gap: '20px' }}>
+            <VimeoCard
+              videoId="1198495841"
+              title="Short Form Reel"
+              category="Social Media Content"
+              badge="500K+ Views"
+              onCursorEnter={() => setCursorVariant('hover')}
+              onCursorLeave={() => setCursorVariant('default')}
+            />
 
-                      {card.bottomOverlay && (
-                        <div className="absolute bottom-4 left-4 z-10">
-                          <span className="text-white text-[18px] font-bold drop-shadow-md">{card.bottomOverlay}</span>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-            </AnimatePresence>
-          </motion.div>
+            <VimeoCard
+              videoId="1198495841"
+              title="Brand Story Edit"
+              category="Commercial"
+              badge="200K+ Views"
+              onCursorEnter={() => setCursorVariant('hover')}
+              onCursorLeave={() => setCursorVariant('default')}
+            />
+
+            <VimeoCard
+              videoId="1198495842"
+              title="University Promo"
+              category="Educational Content"
+              badge="50K+ Views"
+              onCursorEnter={() => setCursorVariant('hover')}
+              onCursorLeave={() => setCursorVariant('default')}
+            />
+          </div>
           
           <div className="w-full flex justify-center mt-12">
             <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}  
@@ -1100,7 +1362,7 @@ export default function App() {
       </ErrorBoundary>
 
       {/* Tools & Software Section */}
-      <section id="Tools" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] py-24 flex flex-col items-center overflow-hidden">
+      <section id="Tools" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] pt-[96px] pb-[96px] flex flex-col items-center overflow-hidden">
         <div className="relative z-10 max-w-5xl mx-auto px-6 w-full flex flex-col items-center">
         {/* Glowing Background for this section */}
         <div 
@@ -1212,7 +1474,7 @@ export default function App() {
 
       <ErrorBoundary>
       {/* Services Section */}
-      <section id="Services" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] py-20 flex flex-col items-center overflow-hidden" ref={servicesRef}>
+      <section id="Services" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] pt-[96px] pb-[96px] flex flex-col items-center overflow-hidden" ref={servicesRef}>
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full flex flex-col items-center">
         {/* Header */}
         <div className="px-4 py-1.5 rounded-full border border-[rgba(255,255,255,0.08)] bg-[#12121a] text-gray-300 text-sm font-medium mb-4">
@@ -1313,289 +1575,8 @@ export default function App() {
 
 
       
-      <ErrorBoundary>
-      {/* Editing Services Section */}
-      <section className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] pt-16 pb-0 overflow-hidden">
-        <div className="relative z-10 w-full flex flex-col items-center">
-          
-          {/* Header */}
-          <div className="w-full max-w-[1100px] mb-12 relative z-10 px-6 lg:px-0">
-            <h2 className="text-4xl md:text-[52px] leading-tight font-[800] tracking-tight text-[#ffffff] text-left" onMouseEnter={() => setCursorVariant('text')} onMouseLeave={() => setCursorVariant('default')}>
-              Editing services that move numbers —<br/>
-              <span className="text-[#7c3aed] italic">not just pixels.</span>
-            </h2>
-          </div>
-
-          <div className="flex flex-col gap-8 w-full max-w-[1100px] px-6 lg:px-0">
-            {/* Card Container 01 */}
-            <div 
-              className="w-full bg-[#0d0d0d] border border-[#222222] rounded-[24px] min-h-[480px] overflow-hidden flex flex-col md:flex-row relative group hover:border-purple-500/30 hover:shadow-[0_0_40px_rgba(124,58,237,0.1)] transition-all duration-500"
-              onMouseEnter={() => { setCursorVariant('play'); setCursorLabel('▶ Play'); }} 
-              onMouseLeave={() => { setCursorVariant('default'); setCursorLabel(''); }}
-            >
-              {/* Corner dots */}
-              <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-purple-500/50 transition-colors z-20"></div>
-              <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-purple-500/50 transition-colors z-20"></div>
-              <div className="absolute bottom-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-purple-500/50 transition-colors z-20"></div>
-              <div className="absolute bottom-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-purple-500/50 transition-colors z-20"></div>
-
-              {/* Left Column (48%) */}
-              <div 
-                className="w-full md:w-[48%] p-8 md:p-12 relative overflow-hidden flex flex-col min-h-[400px] md:min-h-auto"
-                style={{ backgroundColor: '#0a0a0a', backgroundImage: 'radial-gradient(ellipse at bottom right, rgba(249,115,22,0.12) 0%, transparent 60%)' }}
-              >
-                {/* Typography */}
-                <div className="relative z-10 mt-4 md:mt-8">
-                  <span className="block text-white text-[56px] md:text-[72px] font-[900] leading-none not-italic">REEL &</span>
-                  <span className="block text-[#f97316] text-[56px] md:text-[72px] font-[900] leading-none mb-1">SHORTS</span>
-                  <div className="inline-block relative">
-                    <span className="block text-white text-[42px] md:text-[56px] font-[900] leading-none">EDITING</span>
-                    <div className="w-full h-[4px] md:h-[6px] bg-white rounded-[3px] mt-1"></div>
-                  </div>
-                </div>
-                
-                {/* Play Button */}
-                <div className="w-[56px] h-[56px] md:w-[64px] md:h-[64px] bg-white rounded-full flex items-center justify-center mt-6 relative z-10 self-start group-hover:scale-110 transition-transform duration-500">
-                  <Play className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-black fill-black ml-1" />
-                </div>
-
-                {/* Decorative Timeline */}
-                <div className="absolute bottom-8 left-8 md:bottom-10 md:left-10 w-[180px] md:w-[200px] h-[48px] md:h-[56px] bg-[#111111] rounded-lg border border-[#222] p-2 md:p-2.5 flex items-center gap-1 z-10 hidden sm:flex opacity-80 group-hover:opacity-100 transition-opacity">
-                  <div className="h-[8px] md:h-[10px] w-[40px] md:w-[48px] bg-[#a855f7] rounded-[3px]"></div>
-                  <div className="h-[8px] md:h-[10px] w-[40px] md:w-[48px] bg-[#22c55e] rounded-[3px]"></div>
-                  <div className="h-[8px] md:h-[10px] w-[50px] md:w-[64px] bg-[#3b82f6] rounded-[3px]"></div>
-                  <div className="h-[8px] md:h-[10px] w-[24px] md:w-[32px] bg-[#f97316] rounded-[3px]"></div>
-                </div>
-
-                {/* Phone Mockup */}
-                <div className="absolute right-[-20px] md:right-[-10px] bottom-[-20px] md:bottom-0 w-[160px] md:w-[180px] h-auto aspect-[9/16] rounded-[24px] md:rounded-[28px] border-[6px] md:border-[8px] border-[#1a1a1a] overflow-hidden z-10 group-hover:-translate-y-4 transition-transform duration-500">
-                  <img src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=400&auto=format&fit=crop" alt="Reels editing" className="w-full h-full object-cover" />
-                </div>
-              </div>
-
-              {/* Right Column (52%) */}
-              <div className="w-full md:w-[52%] bg-transparent p-8 md:py-12 md:px-14 flex flex-col relative z-10 justify-center">
-                <div className="flex justify-between items-start w-full">
-                  <div className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] rounded-xl bg-[#1a1a24] border border-[#2a2a3e] flex items-center justify-center group-hover:bg-purple-500/20 group-hover:border-purple-500/50 transition-colors">
-                    <Film className="w-4 h-4 md:w-5 md:h-5 text-[#7c3aed]" />
-                  </div>
-                  <span className="text-[64px] md:text-[80px] font-[800] leading-none text-[#1a1a1a] select-none group-hover:text-[#222] transition-colors">
-                    01
-                  </span>
-                </div>
-
-                <h3 className="text-3xl md:text-[40px] font-bold text-white mt-4 md:mt-6 leading-tight">
-                  Reel & Shorts Editing
-                </h3>
-                
-                <p className="text-[#a1a1aa] text-[14px] md:text-[16px] leading-relaxed mt-4 max-w-[420px]">
-                  Turn raw clips into engaging vertical videos tailored for Reels, Shorts, and TikTok. Fast-paced cuts, snappy captions, and trending effects made to boost engagement and brand growth.
-                </p>
-
-                <ul className="flex flex-col gap-3.5 mt-8">
-                  {[
-                    "Dynamic Editing + Flow Optimization",
-                    "Captions & Subtitles Included",
-                    "Trendy Transitions & Sound Sync",
-                    "Optimized Videos (Reels, Shorts)"
-                  ].map((bullet, idx) => (
-                    <li key={idx} className="flex items-center gap-4">
-                      <CheckCircle className="w-5 h-5 text-[#7c3aed] shrink-0" />
-                      <span className="text-gray-300 text-[14px] md:text-[15px] font-medium">{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}  
-                  onClick={() => document.getElementById('Contact')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="mt-10 bg-white text-[#0a0a0f] hover:bg-gray-200 rounded-full px-8 py-3.5 text-[14px] md:text-[15px] font-bold transition-all self-start flex items-center gap-2"
-                >
-                  Contact us <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Card Container 02 */}
-            <div 
-              className="w-full bg-[#0d0d0d] border border-[#222222] rounded-[24px] min-h-[480px] overflow-hidden flex flex-col md:flex-row-reverse relative group hover:border-blue-500/30 hover:shadow-[0_0_40px_rgba(59,130,246,0.1)] transition-all duration-500"
-              onMouseEnter={() => { setCursorVariant('play'); setCursorLabel('▶ Play'); }} 
-              onMouseLeave={() => { setCursorVariant('default'); setCursorLabel(''); }}
-            >
-              {/* Corner dots */}
-              <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-blue-500/50 transition-colors z-20"></div>
-              <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-blue-500/50 transition-colors z-20"></div>
-              <div className="absolute bottom-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-blue-500/50 transition-colors z-20"></div>
-              <div className="absolute bottom-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-blue-500/50 transition-colors z-20"></div>
-
-              {/* Right/Visual Column (48%) */}
-              <div 
-                className="w-full md:w-[48%] p-8 md:p-12 relative overflow-hidden flex flex-col min-h-[400px] md:min-h-auto"
-                style={{ backgroundColor: '#0a0a0a', backgroundImage: 'radial-gradient(ellipse at bottom left, rgba(59,130,246,0.12) 0%, transparent 60%)' }}
-              >
-                {/* Typography */}
-                <div className="relative z-10 mt-4 md:mt-8">
-                  <span className="block text-white text-[56px] md:text-[72px] font-[900] leading-none not-italic">YOUTUBE</span>
-                  <span className="block text-[#3b82f6] text-[56px] md:text-[72px] font-[900] leading-none mb-1">LONG FORM</span>
-                  <div className="inline-block relative">
-                    <span className="block text-white text-[42px] md:text-[56px] font-[900] leading-none">EDITING</span>
-                    <div className="w-full h-[4px] md:h-[6px] bg-white rounded-[3px] mt-1"></div>
-                  </div>
-                </div>
-                
-                {/* Play Button */}
-                <div className="w-[56px] h-[56px] md:w-[64px] md:h-[64px] bg-white rounded-full flex items-center justify-center mt-6 relative z-10 self-start group-hover:scale-110 transition-transform duration-500">
-                  <Play className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-black fill-black ml-1" />
-                </div>
-
-                {/* Desktop Mockup */}
-                <div className="absolute right-[-40px] md:right-[-60px] bottom-[-20px] md:bottom-[-30px] w-[300px] md:w-[400px] h-auto aspect-video rounded-[16px] md:rounded-[20px] border-[6px] md:border-[8px] border-[#1a1a1a] overflow-hidden z-10 group-hover:-translate-x-4 transition-transform duration-500 shadow-2xl">
-                  <img src="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?q=80&w=600&auto=format&fit=crop" alt="YouTube editing" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                     <div className="w-12 h-12 bg-red-600 rounded-[12px] flex items-center justify-center shadow-lg">
-                        <Play className="w-6 h-6 text-white fill-white ml-1" />
-                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Left/Text Column (52%) */}
-              <div className="w-full md:w-[52%] bg-transparent p-8 md:py-12 md:px-14 flex flex-col relative z-10 justify-center">
-                <div className="flex justify-between items-start w-full">
-                  <div className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] rounded-xl bg-[#1a1a24] border border-[#2a2a3e] flex items-center justify-center group-hover:bg-blue-500/20 group-hover:border-blue-500/50 transition-colors">
-                    <MonitorPlay className="w-4 h-4 md:w-5 md:h-5 text-[#3b82f6]" />
-                  </div>
-                  <span className="text-[64px] md:text-[80px] font-[800] leading-none text-[#1a1a1a] select-none group-hover:text-[#222] transition-colors">
-                    02
-                  </span>
-                </div>
-
-                <h3 className="text-3xl md:text-[40px] font-bold text-white mt-4 md:mt-6 leading-tight">
-                  YouTube Videos
-                </h3>
-                
-                <p className="text-[#a1a1aa] text-[14px] md:text-[16px] leading-relaxed mt-4 max-w-[420px]">
-                  Keep your audience hooked from intro to outro. Professional long-form video editing that focuses on deep storytelling, retention pacing, and cinematic color grading.
-                </p>
-
-                <ul className="flex flex-col gap-3.5 mt-8">
-                  {[
-                    "Retention-Focused Hook Editing",
-                    "A-Roll & B-Roll Assembly",
-                    "Cinematic Color Grading",
-                    "Audio Mixing & Sound Design"
-                  ].map((bullet, idx) => (
-                    <li key={idx} className="flex items-center gap-4">
-                      <CheckCircle className="w-5 h-5 text-[#3b82f6] shrink-0" />
-                      <span className="text-gray-300 text-[14px] md:text-[15px] font-medium">{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}  
-                  onClick={() => document.getElementById('Contact')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="mt-10 bg-white text-[#0a0a0f] hover:bg-gray-200 rounded-full px-8 py-3.5 text-[14px] md:text-[15px] font-bold transition-all self-start flex items-center gap-2"
-                >
-                  Get Started <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Card Container 03 */}
-            <div 
-              className="w-full bg-[#0d0d0d] border border-[#222222] rounded-[24px] min-h-[480px] overflow-hidden flex flex-col md:flex-row relative group hover:border-emerald-500/30 hover:shadow-[0_0_40px_rgba(16,185,129,0.1)] transition-all duration-500"
-              onMouseEnter={() => { setCursorVariant('play'); setCursorLabel('▶ Play'); }} 
-              onMouseLeave={() => { setCursorVariant('default'); setCursorLabel(''); }}
-            >
-              {/* Corner dots */}
-              <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-emerald-500/50 transition-colors z-20"></div>
-              <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-emerald-500/50 transition-colors z-20"></div>
-              <div className="absolute bottom-4 left-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-emerald-500/50 transition-colors z-20"></div>
-              <div className="absolute bottom-4 right-4 w-2 h-2 rounded-full bg-[#2a2a2a] group-hover:bg-emerald-500/50 transition-colors z-20"></div>
-
-              {/* Left/Visual Column (48%) */}
-              <div 
-                className="w-full md:w-[48%] p-8 md:p-12 relative overflow-hidden flex flex-col min-h-[400px] md:min-h-auto"
-                style={{ backgroundColor: '#0a0a0a', backgroundImage: 'radial-gradient(ellipse at bottom right, rgba(16,185,129,0.12) 0%, transparent 60%)' }}
-              >
-                {/* Typography */}
-                <div className="relative z-10 mt-4 md:mt-8">
-                  <span className="block text-white text-[56px] md:text-[72px] font-[900] leading-none not-italic">PODCAST &</span>
-                  <span className="block text-[#10b981] text-[56px] md:text-[72px] font-[900] leading-none mb-1">INTERVIEW</span>
-                  <div className="inline-block relative">
-                    <span className="block text-white text-[42px] md:text-[56px] font-[900] leading-none">EDITING</span>
-                    <div className="w-full h-[4px] md:h-[6px] bg-white rounded-[3px] mt-1"></div>
-                  </div>
-                </div>
-                
-                {/* Play Button */}
-                <div className="w-[56px] h-[56px] md:w-[64px] md:h-[64px] bg-white rounded-full flex items-center justify-center mt-6 relative z-10 self-start group-hover:scale-110 transition-transform duration-500">
-                  <Play className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-black fill-black ml-1" />
-                </div>
-
-                {/* Podcast Graphic Mockup */}
-                <div className="absolute right-[-40px] md:right-[-60px] bottom-[-20px] md:bottom-[-30px] w-[300px] md:w-[400px] h-auto aspect-video rounded-[16px] md:rounded-[20px] border-[6px] md:border-[8px] border-[#1a1a1a] overflow-hidden z-10 group-hover:-translate-y-4 transition-transform duration-500 shadow-2xl">
-                  <img src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop" alt="Podcast editing" className="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 transition-all duration-500" />
-                  <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/90 to-transparent flex flex-col justify-end p-6 md:p-8">
-                    <div className="w-full h-1.5 md:h-2 bg-white/20 rounded-full mb-3 overflow-hidden">
-                      <div className="w-[65%] h-full bg-[#10b981] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
-                    </div>
-                    <div className="flex justify-between text-white text-[10px] md:text-xs font-mono font-medium">
-                      <span>24:15</span>
-                      <span>45:30</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right/Text Column (52%) */}
-              <div className="w-full md:w-[52%] bg-transparent p-8 md:py-12 md:px-14 flex flex-col relative z-10 justify-center">
-                <div className="flex justify-between items-start w-full">
-                  <div className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] rounded-xl bg-[#1a1a24] border border-[#2a2a3e] flex items-center justify-center group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 transition-colors">
-                    <Mic className="w-4 h-4 md:w-5 md:h-5 text-[#10b981]" />
-                  </div>
-                  <span className="text-[64px] md:text-[80px] font-[800] leading-none text-[#1a1a1a] select-none group-hover:text-[#222] transition-colors">
-                    03
-                  </span>
-                </div>
-
-                <h3 className="text-3xl md:text-[40px] font-bold text-white mt-4 md:mt-6 leading-tight">
-                  Podcast & Interviews
-                </h3>
-                
-                <p className="text-[#a1a1aa] text-[14px] md:text-[16px] leading-relaxed mt-4 max-w-[420px]">
-                  Multi-camera sync, dead air removal, and pristine audio leveling. We deliver polished podcast episodes ready for Spotify, Apple Podcasts, and YouTube.
-                </p>
-
-                <ul className="flex flex-col gap-3.5 mt-8">
-                  {[
-                    "Multi-Cam Switching & Syncing",
-                    "Advanced Audio Cleanup & EQ",
-                    "Lower Thirds & Branding",
-                    "Micro-Content Extraction (Shorts)"
-                  ].map((bullet, idx) => (
-                    <li key={idx} className="flex items-center gap-4">
-                      <CheckCircle className="w-5 h-5 text-[#10b981] shrink-0" />
-                      <span className="text-gray-300 text-[14px] md:text-[15px] font-medium">{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}  
-                  onClick={() => document.getElementById('Contact')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="mt-10 bg-white text-[#0a0a0f] hover:bg-gray-200 rounded-full px-8 py-3.5 text-[14px] md:text-[15px] font-bold transition-all self-start flex items-center gap-2"
-                >
-                  Book Service <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-      </ErrorBoundary>
-
-      {/* CTA & Contact Section */}
-      <section id="Contact" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] py-32 overflow-hidden flex justify-center">
+            {/* CTA & Contact Section */}
+      <section id="Contact" className="relative w-full bg-transparent border-t border-[rgba(255,255,255,0.05)] pt-[96px] pb-[96px] overflow-hidden flex justify-center">
         
         {/* Glow behind phone */}
         <div 
@@ -1656,20 +1637,33 @@ export default function App() {
           {/* Right Column (Phone Mockup) */}
           <div className="w-full lg:w-[45%] flex justify-center lg:justify-end relative pb-10 lg:pb-0 z-10 hidden sm:flex">
             {/* Phone Mockup */}
-            <div className="relative w-[300px] sm:w-[320px] aspect-[9/19] rounded-[48px] border-[14px] border-[rgba(255,255,255,0.08)] bg-[#050508] shadow-2xl shadow-purple-900/40 overflow-visible mt-10 lg:mt-0">
+            <div className="relative w-[300px] aspect-[9/19] mt-10 lg:mt-0"
+              style={{
+                border: '8px solid #1a1a1a',
+                borderRadius: '52px',
+                boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08), 0 30px 80px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.05)',
+                backgroundColor: '#000000'
+              }}>
               
+              {/* Dynamic Island */}
+              <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', width: '120px', height: '34px', backgroundColor: '#000000', borderRadius: '20px', zIndex: 10 }} />
+              
+              {/* Side Buttons */}
+              <div style={{ position: 'absolute', left: '-10px', top: '120px', width: '3px', height: '32px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', left: '-10px', top: '162px', width: '3px', height: '32px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', left: '-10px', top: '80px', width: '3px', height: '20px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              <div style={{ position: 'absolute', right: '-10px', top: '140px', width: '3px', height: '52px', backgroundColor: '#2a2a2a', borderRadius: '2px' }} />
+              
+              {/* Home Indicator */}
+              <div style={{ position: 'absolute', bottom: '8px', left: '50%', transform: 'translateX(-50%)', width: '120px', height: '4px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '4px', zIndex: 10 }} />
+
               {/* Inner Phone Screen */}
-              <div className="w-full h-full rounded-[34px] overflow-hidden bg-[#12121a] relative">
+              <div style={{ borderRadius: '44px', width: '100%', height: '100%', overflow: 'hidden', position: 'relative', backgroundColor: '#12121a' }}>
                 <img 
                   src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600&auto=format&fit=crop" 
                   alt="Sanjana Editorial"
                   className="w-full h-full object-cover opacity-90 transition-transform duration-700 hover:scale-105 grayscale hover:grayscale-0"
                 />
-                
-                {/* Phone Top Notch area */}
-                <div className="absolute top-0 inset-x-0 h-6 flex justify-center">
-                  <div className="w-24 h-6 bg-[#1f1f2e] rounded-b-2xl"></div>
-                </div>
               </div>
 
               {/* Floating Dark Badges Overlaid on Left */}
@@ -1720,6 +1714,133 @@ export default function App() {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer style={{ backgroundColor: 'rgba(10,5,20,0.95)', borderTop: '1px solid rgba(124,58,237,0.25)', padding: '48px 24px 32px', position: 'relative' }}>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '600px',
+          maxWidth: '100%',
+          height: '1px',
+          background: 'linear-gradient(to right, transparent, rgba(124,58,237,0.8), transparent)',
+          boxShadow: '0 0 20px 2px rgba(124,58,237,0.5)'
+        }}></div>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '40px' }}>
+          
+          <div className="flex flex-col md:flex-row justify-between gap-10">
+            {/* Left Column */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Video className="w-5 h-5 text-purple-500" />
+                <span className="text-white font-bold text-[18px]">Sanjana Meghwal</span>
+              </div>
+              <p className="text-[#6b7280] text-[13px] italic max-w-[240px] m-0">
+                "Every story deserves to be told creatively, authentically, and memorably."
+              </p>
+              <div className="flex items-center gap-2 mt-4 cursor-default">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse hidden sm:block"></span>
+                <span className="text-[#6b7280] text-[13px]">Available for new projects</span>
+              </div>
+            </div>
+
+            {/* Center Column */}
+            <div className="flex flex-col gap-[10px]">
+              <span className="text-gray-500 uppercase text-[11px] tracking-wider mb-3 font-semibold">Quick Links</span>
+              <button 
+                onClick={() => document.getElementById('Portfolio')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-[#9ca3af] text-sm hover:text-white transition-colors text-left font-medium w-fit cursor-none"
+                onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}
+              >Projects</button>
+              <button 
+                onClick={() => document.getElementById('AboutMe')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-[#9ca3af] text-sm hover:text-white transition-colors text-left font-medium w-fit cursor-none"
+                onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}
+              >About</button>
+              <button 
+                onClick={() => document.getElementById('Services')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-[#9ca3af] text-sm hover:text-white transition-colors text-left font-medium w-fit cursor-none"
+                onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}
+              >Services</button>
+              <button 
+                onClick={() => document.getElementById('Process')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-[#9ca3af] text-sm hover:text-white transition-colors text-left font-medium w-fit cursor-none"
+                onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}
+              >Process</button>
+              <button 
+                onClick={() => document.getElementById('Contact')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-[#9ca3af] text-sm hover:text-white transition-colors text-left font-medium w-fit cursor-none"
+                onMouseEnter={() => setCursorVariant('hover')} onMouseLeave={() => setCursorVariant('default')}
+              >Contact</button>
+            </div>
+
+            {/* Right Column */}
+            <div className="flex flex-col gap-[10px]">
+              <span className="text-gray-500 uppercase text-[11px] tracking-wider mb-3 font-semibold">Get In Touch</span>
+              
+              <button 
+                onClick={() => window.open('tel:+916367168026')}
+                className="flex items-center gap-2 text-[#9ca3af] hover:text-white transition-colors cursor-none w-fit group"
+                onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}
+              >
+                <Phone className="w-4 h-4 text-purple-500 group-hover:text-purple-400 transition-colors" />
+                <span className="text-[13px]">+91 6367168026</span>
+              </button>
+
+              <button 
+                onClick={() => window.open('mailto:sanjanameghwal06@gmail.com')}
+                className="flex items-center gap-2 text-[#9ca3af] hover:text-white transition-colors cursor-none w-fit group"
+                onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}
+              >
+                <Mail className="w-4 h-4 text-purple-500 group-hover:text-purple-400 transition-colors" />
+                <span className="text-[13px]">sanjanameghwal06@gmail.com</span>
+              </button>
+
+              <button 
+                onClick={() => window.open('https://maps.google.com/?q=Jodhpur+Rajasthan', '_blank')}
+                className="flex items-center gap-2 text-[#9ca3af] hover:text-white transition-colors cursor-none w-fit group"
+                onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}
+              >
+                <MapPin className="w-4 h-4 text-purple-500 group-hover:text-purple-400 transition-colors" />
+                <span className="text-[13px]">Jodhpur, Rajasthan</span>
+              </button>
+            </div>
+          </div>
+
+          <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.06)', margin: '0' }}></div>
+
+          <div className="flex justify-between items-center flex-wrap gap-4">
+             <p className="text-[#6b7280] text-xs m-0">© {new Date().getFullYear()} Sanjana Meghwal. All rights reserved.</p>
+
+             <div className="flex items-center gap-[12px]">
+                <button 
+                  onClick={() => window.open('https://instagram.com/sanjana_creates', '_blank')}
+                  className="w-10 h-10 rounded-full border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-[#9ca3af] hover:text-white hover:border-purple-500 hover:bg-purple-500/10 transition-all cursor-none"
+                  onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
+                </button>
+                <button 
+                  onClick={() => window.open('https://twitter.com/SanjanaMeghwal', '_blank')}
+                  className="w-10 h-10 rounded-full border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-[#9ca3af] hover:text-white hover:border-purple-500 hover:bg-purple-500/10 transition-all cursor-none"
+                  onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}
+                >
+                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </button>
+                <button 
+                  onClick={() => window.open('https://tiktok.com/@sanjana_creates', '_blank')}
+                  className="w-10 h-10 rounded-full border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-[#9ca3af] hover:text-white hover:border-purple-500 hover:bg-purple-500/10 transition-all cursor-none"
+                  onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')}
+                >
+                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 2.26-1.17 4.51-3.03 5.86-1.78 1.3-4.14 1.63-6.25 1.05-2.4-.64-4.29-2.5-4.88-4.9-.7-2.88.36-6.08 2.64-8.08 1.94-1.7 4.67-2.22 7.15-1.55v4.06c-1.25-.33-2.67-.19-3.79.46-1.16.68-1.89 1.94-1.92 3.28-.04 1.4.81 2.74 2.15 3.28 1.34.54 2.95.29 4.09-.64 1.08-.88 1.64-2.23 1.65-3.64.03-4.8.01-9.61.01-14.42z"/></svg>
+                </button>
+             </div>
+          </div>
+
+        </div>
+      </footer>
       </>
       )}
     </motion.div>
