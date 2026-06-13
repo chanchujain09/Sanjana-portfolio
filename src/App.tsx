@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'motion/react';
-import { Video, PlayCircle, Play, Film, Clock, Briefcase, Pencil, Pause, Palette, Mic, GraduationCap, Phone, Mail, MapPin, CheckCircle, Star, Quote, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, Heart, Globe, Scissors, Layers, Music, PenTool, Share2, TrendingUp, Instagram, Twitter, Music2, FileText, Sparkles, Download, MonitorPlay, Volume2, VolumeX } from 'lucide-react';
+import { Video, PlayCircle, Play, Film, Clock, Briefcase, Pencil, Pause, Palette, Mic, GraduationCap, Phone, Mail, MapPin, CheckCircle, Star, Quote, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, Heart, Globe, Scissors, Layers, Music, PenTool, Share2, TrendingUp, Instagram, Twitter, Music2, FileText, Sparkles, Download, MonitorPlay, Volume2, VolumeX, ExternalLink } from 'lucide-react';
 
 const SERVICES = [
   {
@@ -272,11 +272,7 @@ const VimeoCard = ({ videoId, title, category, badge, onCursorEnter, onCursorLea
         </button>
       </div>
 
-      {/* Title bottom-left */}
-      <div style={{ position: 'absolute', bottom: '14px', left: '14px', right: '64px', zIndex: 10 }}>
-        <p style={{ color: 'white', fontSize: '14px', fontWeight: 700, margin: '0 0 2px' }}>{title}</p>
-        <p style={{ color: '#9ca3af', fontSize: '12px', margin: 0 }}>{category}</p>
-      </div>
+      {/* Title removed */}
     </div>
   );
 }
@@ -309,7 +305,7 @@ const portfolioCards = [
   {
     id: 1,
     creator: "Sanjana M.",
-    image: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?q=80&w=600&auto=format&fit=crop",
+    image: "https://i.postimg.cc/C5HTY8Zx/img1.jpg",
     category: "Short-Form & Reels"
   },
   {
@@ -358,7 +354,402 @@ const servicesData = [
   { num:"06", icon: GraduationCap, title:"Content for Institutions", desc:"Specialized in educational and university promotional content.", bullets:["Campus tours and event coverage","Admissions and brand films","Social media campaigns for colleges"] }
 ];
 
+const CloudinaryVideoCard = ({ publicId, cloudName, title, category, badge, onCursorEnter, onCursorLeave }: {
+  publicId: string;
+  cloudName: string;
+  title: string;
+  category: string;
+  badge: string;
+  onCursorEnter?: () => void;
+  onCursorLeave?: () => void;
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  const videoSrc = `https://res.cloudinary.com/${cloudName}/video/upload/${publicId}.mp4`;
+  const posterSrc = `https://res.cloudinary.com/${cloudName}/video/upload/so_0/${publicId}.jpg`;
+
+  // Autoplay on mount
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = false;
+    video.volume = 1;
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        setIsPlaying(true);
+        setIsLoaded(true);
+      }).catch(() => {
+        // Browser blocked unmuted autoplay, fallback to muted
+        video.muted = true;
+        setIsMuted(true);
+        video.play().then(() => {
+          setIsPlaying(true);
+          setIsLoaded(true);
+        }).catch(() => setIsLoaded(true));
+      });
+    }
+  }, []);
+
+  // Sound toggle only — no play/pause on hover
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    onCursorEnter?.();
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    onCursorLeave?.();
+  };
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    if (isMuted) {
+      video.muted = false;
+      video.volume = 1;
+      setIsMuted(false);
+    } else {
+      video.muted = true;
+      video.volume = 0;
+      setIsMuted(true);
+    }
+  };
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    if (isPlaying) {
+      video.pause();
+      setIsPlaying(false);
+    } else {
+      video.play().catch(() => {});
+      setIsPlaying(true);
+    }
+  };
+
+  return (
+    <div
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        border: `1px solid ${isHovered ? 'rgba(124,58,237,0.6)' : '#1f1f2e'}`,
+        backgroundColor: '#111118',
+        transition: 'border-color 300ms, box-shadow 300ms',
+        boxShadow: isHovered ? '0 0 30px rgba(124,58,237,0.2)' : 'none',
+        cursor: 'none'
+      }}
+    >
+      {/* Loading spinner */}
+      {!isLoaded && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 5,
+          backgroundColor: '#111118',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            width: '32px', height: '32px', borderRadius: '50%',
+            border: '2px solid rgba(124,58,237,0.3)',
+            borderTopColor: '#7c3aed',
+            animation: 'spin 0.8s linear infinite'
+          }} />
+        </div>
+      )}
+
+      {/* Video — autoplay loop muted by default */}
+      <video
+        ref={videoRef}
+        src={videoSrc}
+        poster={posterSrc}
+        muted
+        loop
+        playsInline
+        preload="auto"
+        onLoadedData={() => setIsLoaded(true)}
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover'
+        }}
+      />
+
+      {/* Gradient overlay */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)',
+        zIndex: 2
+      }} />
+
+      {/* Stat badge top-left */}
+      <div style={{
+        position: 'absolute', top: '14px', left: '14px', zIndex: 10,
+        display: 'flex', alignItems: 'center', gap: '6px',
+        backgroundColor: 'rgba(0,0,0,0.65)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: '999px', padding: '4px 10px'
+      }}>
+        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#7c3aed' }} />
+        <span style={{ color: 'white', fontSize: '11px', fontWeight: 600 }}>{badge}</span>
+      </div>
+
+      {/* Sound ON badge top-right */}
+      {!isMuted && (
+        <div style={{
+          position: 'absolute', top: '14px', right: '14px', zIndex: 10,
+          display: 'flex', alignItems: 'center', gap: '5px',
+          backgroundColor: 'rgba(124,58,237,0.85)',
+          borderRadius: '999px', padding: '3px 10px'
+        }}>
+          <span style={{
+            width: '6px', height: '6px', borderRadius: '50%',
+            backgroundColor: 'white', animation: 'pulse 1s infinite'
+          }} />
+          <span style={{ color: 'white', fontSize: '10px', fontWeight: 700 }}>SOUND ON</span>
+        </div>
+      )}
+
+      {/* Controls — always visible at bottom right */}
+      <div style={{
+        position: 'absolute', bottom: '52px', right: '14px',
+        display: 'flex', gap: '8px', zIndex: 10,
+        opacity: isHovered ? 1 : 0,
+        transform: isHovered ? 'translateY(0)' : 'translateY(6px)',
+        transition: 'opacity 200ms, transform 200ms'
+      }}>
+        {/* Play/Pause */}
+        <button onClick={togglePlay} style={{
+          width: '34px', height: '34px', borderRadius: '50%',
+          backgroundColor: 'rgba(0,0,0,0.75)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          color: 'white', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', cursor: 'none'
+        }}>
+          {isPlaying
+            ? <Pause style={{ width: 12, height: 12, fill: 'white', color: 'white' }} />
+            : <Play style={{ width: 12, height: 12, fill: 'white', color: 'white', marginLeft: '1px' }} />
+          }
+        </button>
+
+        {/* Mute/Unmute */}
+        <button onClick={toggleMute} style={{
+          width: '34px', height: '34px', borderRadius: '50%',
+          backgroundColor: isMuted ? 'rgba(0,0,0,0.75)' : 'rgba(124,58,237,0.9)',
+          backdropFilter: 'blur(8px)',
+          border: `1px solid ${isMuted ? 'rgba(255,255,255,0.2)' : 'rgba(124,58,237,0.9)'}`,
+          color: 'white', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', cursor: 'none',
+          transition: 'all 200ms'
+        }}>
+          {isMuted
+            ? <VolumeX style={{ width: 12, height: 12, color: 'white' }} />
+            : <Volume2 style={{ width: 12, height: 12, color: 'white' }} />
+          }
+        </button>
+      </div>
+
+      {/* Title removed */}
+    </div>
+  );
+};
+
+const EventVideoCard = ({ publicId, cloudName, title, category, badge, number, onCursorEnter, onCursorLeave }: {
+  publicId: string;
+  cloudName: string;
+  title: string;
+  category: string;
+  badge: string;
+  number: string;
+  onCursorEnter?: () => void;
+  onCursorLeave?: () => void;
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      onMouseEnter={() => { setIsHovered(true); onCursorEnter?.(); }}
+      onMouseLeave={() => { setIsHovered(false); onCursorLeave?.(); }}
+      style={{
+        position: 'relative',
+        width: '100%',
+        borderRadius: '20px',
+        overflow: 'hidden',
+        border: `1px solid ${isHovered ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.07)'}`,
+        backgroundColor: '#0d0b14',
+        transition: 'border-color 300ms, box-shadow 300ms, transform 300ms',
+        boxShadow: isHovered ? '0 0 50px rgba(124,58,237,0.2), 0 20px 60px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.4)',
+        transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
+        cursor: 'none',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      {/* Purple top accent line */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0,
+        height: '2px', zIndex: 10,
+        background: isHovered
+          ? 'linear-gradient(to right, #7c3aed, #a78bfa, #7c3aed)'
+          : 'linear-gradient(to right, rgba(124,58,237,0.4), transparent)',
+        transition: 'background 300ms'
+      }} />
+
+      {/* Top info bar */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '20px 24px 16px',
+        position: 'relative',
+        zIndex: 5
+      }}>
+        {/* Left: number + title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <span style={{
+            fontSize: '48px', fontWeight: 800,
+            color: 'rgba(124,58,237,0.25)',
+            lineHeight: 1, userSelect: 'none',
+            fontVariantNumeric: 'tabular-nums'
+          }}>{number}</span>
+          <div>
+            <p style={{ color: 'white', fontSize: '20px', fontWeight: 700, margin: '0 0 4px' }}>{title}</p>
+            <p style={{ color: '#6b7280', fontSize: '13px', margin: 0 }}>{category}</p>
+          </div>
+        </div>
+
+        {/* Right: badge */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '999px', padding: '6px 14px'
+        }}>
+          <span style={{
+            width: '7px', height: '7px', borderRadius: '50%',
+            backgroundColor: '#ef4444',
+            animation: 'pulse 1.5s infinite'
+          }} />
+          <span style={{ color: 'white', fontSize: '12px', fontWeight: 600 }}>{badge}</span>
+        </div>
+      </div>
+
+      {/* Video iframe — large */}
+      <div style={{ position: 'relative', width: '100%', height: '520px' }}>
+        <iframe
+          src={`https://player.cloudinary.com/embed/?cloud_name=${cloudName}&public_id=${publicId}&fluid=true&controls=true&autoplay=true&loop=true&muted=false&colors[accent]=%237c3aed&colors[base]=%230d0b14&colors[text]=white`}
+          style={{
+            position: 'absolute',
+            top: 0, left: 0,
+            width: '100%', height: '100%',
+            border: 'none'
+          }}
+          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+
+      {/* Bottom info strip */}
+      <div style={{
+        padding: '16px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderTop: '1px solid rgba(255,255,255,0.05)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            width: '8px', height: '8px', borderRadius: '50%',
+            backgroundColor: '#22c55e',
+            animation: 'pulse 2s infinite'
+          }} />
+          <span style={{ color: '#6b7280', fontSize: '13px' }}>Auto-playing · Loop enabled</span>
+        </div>
+        <span style={{ color: '#374151', fontSize: '12px' }}>Sanjana Meghwal</span>
+      </div>
+    </div>
+  );
+};
+
+const CloudinaryIframeCard = ({ publicId, cloudName, title, category, badge, onCursorEnter, onCursorLeave }: {
+  publicId: string;
+  cloudName: string;
+  title: string;
+  category: string;
+  badge: string;
+  onCursorEnter?: () => void;
+  onCursorLeave?: () => void;
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      onMouseEnter={() => { setIsHovered(true); onCursorEnter?.(); }}
+      onMouseLeave={() => { setIsHovered(false); onCursorLeave?.(); }}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        border: `1px solid ${isHovered ? 'rgba(124,58,237,0.6)' : '#1f1f2e'}`,
+        backgroundColor: '#111118',
+        transition: 'border-color 300ms, box-shadow 300ms',
+        boxShadow: isHovered ? '0 0 30px rgba(124,58,237,0.2)' : 'none',
+        cursor: 'none'
+      }}
+    >
+      {/* Cloudinary iframe embed */}
+      <iframe
+        src={`https://player.cloudinary.com/embed/?cloud_name=${cloudName}&public_id=${publicId}&fluid=true&controls=true&autoplay=true&loop=true&muted=false&colors[accent]=%237c3aed&colors[base]=%23111118&colors[text]=white`}
+        style={{
+          position: 'absolute',
+          top: 0, left: 0,
+          width: '100%',
+          height: '100%',
+          border: 'none'
+        }}
+        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+        allowFullScreen
+      />
+
+      {/* Stat badge top-left */}
+      <div style={{
+        position: 'absolute', top: '14px', left: '14px', zIndex: 10,
+        display: 'flex', alignItems: 'center', gap: '6px',
+        backgroundColor: 'rgba(0,0,0,0.65)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: '999px', padding: '4px 10px',
+        pointerEvents: 'none'
+      }}>
+        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#7c3aed' }} />
+        <span style={{ color: 'white', fontSize: '11px', fontWeight: 600 }}>{badge}</span>
+      </div>
+
+      {/* Title removed */}
+    </div>
+  );
+};
+
 export default function App() {
+  const eventSectionRef = useRef<HTMLDivElement>(null);
 
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [cursorVariant, setCursorVariant] = useState('default');
@@ -458,6 +849,7 @@ export default function App() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeLink, setActiveLink] = useState('Projects');
   const [showAllProjects, setShowAllProjects] = useState(false);
+  const [projectsTab, setProjectsTab] = useState('All');
   const [activeFilter, setActiveFilter] = useState('All');
   const [activeService, setActiveService] = useState(0);
 
@@ -527,6 +919,16 @@ export default function App() {
           linear-gradient(to right, rgba(255,255,255,0.032) 1px, transparent 1px),
           linear-gradient(to bottom, rgba(255,255,255,0.032) 1px, transparent 1px);
         background-size: 60px 60px;
+      }
+      
+      @media (max-width: 768px) {
+        .services-layout { flex-direction: column !important; }
+        .services-left { width: 100% !important; min-width: unset !important; }
+      }
+      
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
       }
     `;
     document.head.appendChild(style);
@@ -805,42 +1207,173 @@ export default function App() {
               </p>
             </div>
 
-            <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-              {allProjects.map((project, idx) => (
-                <div key={idx} className="aspect-[9/16] relative bg-[#111118] border border-[rgba(255,255,255,0.08)] rounded-[24px] overflow-hidden group cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:border-purple-500/50 hover:shadow-[0_0_20px_rgba(147,51,234,0.15)]" onMouseEnter={() => { setCursorVariant('play'); setCursorLabel('▶ Play'); }} onMouseLeave={() => { setCursorVariant('default'); setCursorLabel(''); }}>
-                  {/* Background Image */}
-                  <img 
-                    src={project.img} 
-                    alt={project.title} 
-                    className="absolute inset-0 w-full h-full object-cover opacity-45 group-hover:opacity-80 transition-opacity duration-700 grayscale group-hover:grayscale-0"
-                  />
-                  {/* Overlay Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent opacity-90" />
-                  
-                  {/* Content */}
-                  <div className="absolute inset-x-0 bottom-0 p-5 flex flex-col justify-end z-10">
-                    <h3 className="text-white text-[14px] font-bold leading-tight group-hover:text-purple-300 transition-colors duration-300">
-                      {project.title}
-                    </h3>
-                    <p className="text-gray-400 text-[12px] mt-1 font-medium">
-                      {project.category}
-                    </p>
-                  </div>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '40px' }}>
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                style={{
+                  padding: '8px 20px',
+                  borderRadius: '999px',
+                  border: '1px solid #7c3aed',
+                  backgroundColor: '#7c3aed',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'none',
+                  transition: 'all 200ms'
+                }}
+                onMouseEnter={() => setCursorVariant('button')}
+                onMouseLeave={() => setCursorVariant('default')}
+              >
+                All
+              </button>
+              <button
+                onClick={() => {
+                  setTimeout(() => {
+                    document.getElementById('event-videos-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 100);
+                }}
+                style={{
+                  padding: '8px 20px',
+                  borderRadius: '999px',
+                  border: '1px solid #1f1f2e',
+                  backgroundColor: 'transparent',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'none',
+                  transition: 'all 200ms'
+                }}
+                onMouseEnter={() => setCursorVariant('button')}
+                onMouseLeave={() => setCursorVariant('default')}
+              >
+                Event Videos ↓
+              </button>
+            </div>
 
-                  {/* Badge */}
-                  <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-full bg-[#12121a]/95 backdrop-blur-md border border-[#2a2a3e] flex items-center gap-1.5 shadow-xl shadow-black/40">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                    <span className="text-white text-[10px] font-bold tracking-wider uppercase">{project.badge}</span>
-                  </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateRows: 'repeat(2, 560px)',
+              gap: '20px',
+              width: '100%'
+            }} className="w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              <CloudinaryIframeCard
+                cloudName="datcdiwco"
+                publicId="vd3_bmid7j"
+                title="Creative Edit Vol.1"
+                category="Social Media Content"
+                badge="500K+ Views"
+                onCursorEnter={() => setCursorVariant('hover')}
+                onCursorLeave={() => setCursorVariant('default')}
+              />
 
-                  {/* Center Play Button */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none">
-                    <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300 shadow-[0_0_20px_rgba(147,51,234,0.5)]">
-                      <Play className="w-5 h-5 text-white ml-1 fill-white" />
-                    </div>
+              <CloudinaryIframeCard
+                cloudName="datcdiwco"
+                publicId="vd7_rer4gi"
+                title="Creative Edit Vol.2"
+                category="Lifestyle & Travel"
+                badge="200K+ Views"
+                onCursorEnter={() => setCursorVariant('hover')}
+                onCursorLeave={() => setCursorVariant('default')}
+              />
+
+              <CloudinaryVideoCard
+                cloudName="datcdiwco"
+                publicId="vd1_cjl25b"
+                title="Brand Story Edit"
+                category="Commercial"
+                badge="10K+ Likes"
+                onCursorEnter={() => setCursorVariant('hover')}
+                onCursorLeave={() => setCursorVariant('default')}
+              />
+
+              <CloudinaryVideoCard
+                cloudName="datcdiwco"
+                publicId="vd7_rer4gi"
+                title="Travel Series"
+                category="Lifestyle"
+                badge="80K+ Views"
+                onCursorEnter={() => setCursorVariant('hover')}
+                onCursorLeave={() => setCursorVariant('default')}
+              />
+
+              <CloudinaryVideoCard
+                cloudName="datcdiwco"
+                publicId="vd2_vsa3t6"
+                title="University Promo"
+                category="Educational"
+                badge="50K+ Views"
+                onCursorEnter={() => setCursorVariant('hover')}
+                onCursorLeave={() => setCursorVariant('default')}
+              />
+
+              <CloudinaryVideoCard
+                cloudName="datcdiwco"
+                publicId="vd5_fmpffj"
+                title="Showreel"
+                category="Behind the Scenes"
+                badge="Raw Footage"
+                onCursorEnter={() => setCursorVariant('hover')}
+                onCursorLeave={() => setCursorVariant('default')}
+              />
+            </div>
+
+            <div style={{
+              width: '100%',
+              height: '1px',
+              background: 'linear-gradient(to right, transparent, rgba(124,58,237,0.4), transparent)',
+              margin: '64px 0 48px'
+            }} />
+
+            <div id="event-videos-section" ref={eventSectionRef} style={{ marginTop: '64px', width: '100%' }}>
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+                {/* Section header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <h3 style={{ color: 'white', fontSize: '32px', fontWeight: 700, margin: '0 0 6px' }}>Event Coverage</h3>
+                    <p style={{ color: '#6b7280', fontSize: '14px', margin: 0 }}>Live event edits and behind the scenes coverage</p>
                   </div>
+                  <div style={{
+                    padding: '6px 16px', borderRadius: '999px',
+                    backgroundColor: '#1e0a3c', border: '1px solid #7c3aed',
+                    color: '#a78bfa', fontSize: '12px', fontWeight: 600
+                  }}>3 Videos</div>
                 </div>
-              ))}
+
+                <EventVideoCard
+                  cloudName="datcdiwco"
+                  publicId="event_3_ztsusg"
+                  title="Event Coverage Vol.3"
+                  category="Live Event · Campus"
+                  badge="Live Recording"
+                  number="01"
+                  onCursorEnter={() => setCursorVariant('hover')}
+                  onCursorLeave={() => setCursorVariant('default')}
+                />
+
+                <EventVideoCard
+                  cloudName="datcdiwco"
+                  publicId="event_1_ziycri"
+                  title="Event Coverage Vol.1"
+                  category="Live Event · Campus"
+                  badge="Live Recording"
+                  number="02"
+                  onCursorEnter={() => setCursorVariant('hover')}
+                  onCursorLeave={() => setCursorVariant('default')}
+                />
+
+                <EventVideoCard
+                  cloudName="datcdiwco"
+                  publicId="event_2_cq2cp7"
+                  title="Event Coverage Vol.2"
+                  category="Live Event · Campus"
+                  badge="Live Recording"
+                  number="03"
+                  onCursorEnter={() => setCursorVariant('hover')}
+                  onCursorLeave={() => setCursorVariant('default')}
+                />
+              </div>
             </div>
           </div>
         </main>
@@ -963,7 +1496,7 @@ export default function App() {
               <div style={{ position: 'absolute', bottom: '8px', left: '50%', transform: 'translateX(-50%)', width: '120px', height: '4px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '4px', zIndex: 10 }} />
 
               <div style={{ borderRadius: '44px', width: '100%', height: '100%', overflow: 'hidden', position: 'relative', backgroundColor: '#111111' }}>
-                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600&auto=format&fit=crop" alt="Center project" className="w-full h-full object-cover opacity-100" />
+                <img src="https://i.postimg.cc/C5HTY8Zx/img1.jpg" alt="Sanjana Meghwal" className="w-full h-full object-cover opacity-100" style={{ objectPosition: 'center top' }} />
               </div>
             </motion.div>
 
@@ -1340,51 +1873,91 @@ export default function App() {
 
           {/* Filter Tabs */}
           <div className="flex flex-wrap justify-center items-center gap-3 mt-6">
-            {['All', 'Short-Form & Reels'].map((filter) => (
-              <button onMouseEnter={() => setCursorVariant('button')} onMouseLeave={() => setCursorVariant('default')} 
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${
-                  activeFilter === filter
-                    ? 'bg-purple-600 text-white border-purple-600'
-                    : 'bg-transparent text-gray-400 border-[rgba(255,255,255,0.08)] hover:border-[#3a3a5c]'
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
+            <button 
+              onMouseEnter={() => setCursorVariant('button')} 
+              onMouseLeave={() => setCursorVariant('default')} 
+              onClick={() => setActiveFilter('All')}
+              className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${
+                activeFilter === 'All'
+                  ? 'bg-purple-600 text-white border-purple-600'
+                  : 'bg-transparent text-gray-400 border-[rgba(255,255,255,0.08)] hover:border-[#3a3a5c]'
+              }`}
+            >
+              All
+            </button>
+            <button 
+              onMouseEnter={() => setCursorVariant('button')} 
+              onMouseLeave={() => setCursorVariant('default')} 
+              onClick={() => {
+                setShowAllProjects(true);
+                window.scrollTo(0, 0);
+                setTimeout(() => {
+                  const eventSection = document.getElementById('event-videos-section');
+                  if (eventSection) {
+                    eventSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }, 500);
+              }}
+              className="px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 border bg-transparent text-gray-400 border-[rgba(255,255,255,0.08)] hover:border-[#3a3a5c] flex items-center gap-1.5"
+            >
+              Event Videos <ExternalLink size={14} className="opacity-70" />
+            </button>
           </div>
         </div>
 
         {/* Masonry Grid Area */}
         <div className="w-full max-w-5xl mx-auto px-6 relative z-10">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3" style={{ gridAutoRows: '600px', gap: '20px' }}>
-            <VimeoCard
-              videoId="1198495841"
-              title="Short Form Reel"
-              category="Social Media Content"
-              badge="500K+ Views"
-              onCursorEnter={() => setCursorVariant('hover')}
-              onCursorLeave={() => setCursorVariant('default')}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'auto', gap: '20px' }}>
+              <div style={{ height: '480px' }}>
+                <CloudinaryIframeCard
+                  cloudName="datcdiwco"
+                  publicId="all1_vpfm2r"
+                  title="Short Form Reel"
+                  category="Social Media Content"
+                  badge="500K+ Views"
+                  onCursorEnter={() => setCursorVariant('hover')}
+                  onCursorLeave={() => setCursorVariant('default')}
+                />
+              </div>
+              <div style={{ height: '480px' }}>
+                <CloudinaryIframeCard
+                  cloudName="datcdiwco"
+                  publicId="all_3_wxya3a"
+                  title="Creative Reel"
+                  category="Lifestyle & Travel"
+                  badge="200K+ Views"
+                  onCursorEnter={() => setCursorVariant('hover')}
+                  onCursorLeave={() => setCursorVariant('default')}
+                />
+              </div>
 
-            <VimeoCard
-              videoId="1198495841"
-              title="Brand Story Edit"
-              category="Commercial"
-              badge="200K+ Views"
-              onCursorEnter={() => setCursorVariant('hover')}
-              onCursorLeave={() => setCursorVariant('default')}
-            />
-
-            <VimeoCard
-              videoId="1198495842"
-              title="University Promo"
-              category="Educational Content"
-              badge="50K+ Views"
-              onCursorEnter={() => setCursorVariant('hover')}
-              onCursorLeave={() => setCursorVariant('default')}
-            />
+              <div
+                onMouseEnter={() => setCursorVariant('hover')}
+                onMouseLeave={() => setCursorVariant('default')}
+                style={{
+                  position: 'relative',
+                  height: '480px',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  border: '1px solid #1f1f2e',
+                  backgroundColor: '#111118',
+                  transition: 'border-color 300ms, box-shadow 300ms',
+                  cursor: 'none'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(124,58,237,0.6)';
+                  e.currentTarget.style.boxShadow = '0 0 30px rgba(124,58,237,0.2)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.borderColor = '#1f1f2e';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                {/* Vimeo iframe */}
+                <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                  <iframe src="https://player.vimeo.com/video/1198495841?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} title="Sanjana Meghwal - PortFolio"></iframe>
+                </div>
+              </div>
           </div>
           
           <div className="w-full flex justify-center mt-12">
@@ -1512,8 +2085,8 @@ export default function App() {
       </section>
 
       {/* Services Section */}
-      <section id="services" style={{ padding: '96px 24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <section id="services" style={{ padding: '96px 24px', borderTop: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
@@ -1532,16 +2105,16 @@ export default function App() {
           </div>
 
           {/* Two column layout */}
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'flex-start' }} className="flex-col md:flex-row">
+          <div className="services-layout" style={{ display: 'flex', flexDirection: 'row', gap: '20px', alignItems: 'stretch', width: '100%' }}>
             
             {/* LEFT — Service list */}
-            <div style={{
-              width: '100%', flexShrink: 0,
+            <div className="services-left" style={{
+              width: '320px', minWidth: '320px', flexShrink: 0,
               backgroundColor: '#111118',
               border: '1px solid #1f1f2e',
               borderRadius: '16px',
               overflow: 'hidden'
-            }} className="md:w-[40%]">
+            }}>
               {SERVICES.map((service, i) => (
                 <div
                   key={i}
@@ -1549,22 +2122,23 @@ export default function App() {
                   onMouseEnter={() => setCursorVariant('hover')}
                   onMouseLeave={() => setCursorVariant('default')}
                   style={{
-                    padding: '16px 20px',
+                    padding: '14px 16px',
                     borderBottom: i < SERVICES.length - 1 ? '1px solid #1f1f2e' : 'none',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     backgroundColor: activeService === i ? 'rgba(124,58,237,0.08)' : 'transparent',
                     borderLeft: activeService === i ? '3px solid #7c3aed' : '3px solid transparent',
-                    cursor: 'none', transition: 'all 200ms'
+                    cursor: 'none', transition: 'all 150ms'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
                     <span style={{
                       color: activeService === i ? '#7c3aed' : '#4b5563',
-                      fontSize: '11px', fontFamily: 'monospace', fontWeight: 600
+                      fontSize: '11px', fontFamily: 'monospace', fontWeight: 600, flexShrink: 0
                     }}>{service.num}</span>
                     <span style={{
                       color: activeService === i ? '#a78bfa' : 'white',
-                      fontSize: '15px', fontWeight: 500
+                      fontSize: '14px', fontWeight: 500,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                     }}>{service.title}</span>
                   </div>
                   <span style={{
@@ -1572,23 +2146,26 @@ export default function App() {
                     fontSize: '16px',
                     transform: activeService === i ? 'rotate(90deg)' : 'rotate(0deg)',
                     transition: 'transform 200ms',
-                    display: 'inline-block'
+                    display: 'inline-block',
+                    flexShrink: 0
                   }}>›</span>
                 </div>
               ))}
             </div>
 
             {/* RIGHT — Active service detail */}
-            <div style={{ flex: 1, minHeight: '320px', width: '100%' }}>
-              {SERVICES[activeService] && (
+            <div style={{ flex: 1, minWidth: 0, minHeight: '380px' }}>
+              {SERVICES[Math.min(activeService, SERVICES.length - 1)] && (
                 <div style={{
                   backgroundColor: '#111118',
                   border: '1px solid #1f1f2e',
                   borderRadius: '16px',
-                  padding: '36px',
+                  padding: '32px',
                   height: '100%',
+                  minHeight: '380px',
                   position: 'relative',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  boxSizing: 'border-box'
                 }}>
                   {/* Step number bg */}
                   <span style={{
@@ -1596,7 +2173,7 @@ export default function App() {
                     fontSize: '72px', fontWeight: 800,
                     color: 'rgba(88,28,180,0.15)', lineHeight: 1,
                     userSelect: 'none', pointerEvents: 'none'
-                  }}>{SERVICES[activeService].num}</span>
+                  }}>{SERVICES[Math.min(activeService, SERVICES.length - 1)].num}</span>
 
                   {/* Icon box */}
                   <div style={{
@@ -1610,7 +2187,7 @@ export default function App() {
 
                   {/* Title */}
                   <h3 style={{ fontSize: '26px', fontWeight: 700, color: 'white', margin: '0 0 12px' }}>
-                    {SERVICES[activeService].title}
+                    {SERVICES[Math.min(activeService, SERVICES.length - 1)].title}
                   </h3>
 
                   {/* Divider */}
@@ -1618,12 +2195,12 @@ export default function App() {
 
                   {/* Description */}
                   <p style={{ color: '#a1a1aa', fontSize: '15px', lineHeight: 1.7, margin: '0 0 24px' }}>
-                    {SERVICES[activeService].desc}
+                    {SERVICES[Math.min(activeService, SERVICES.length - 1)].desc}
                   </p>
 
                   {/* Bullets */}
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {SERVICES[activeService].bullets.map((bullet, j) => (
+                    {SERVICES[Math.min(activeService, SERVICES.length - 1)].bullets.map((bullet, j) => (
                       <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                         <Play style={{ width: 11, height: 11, color: '#7c3aed', fill: '#7c3aed', marginTop: '4px', flexShrink: 0 }} />
                         <span style={{ color: '#d1d5db', fontSize: '14px', lineHeight: 1.5 }}>{bullet}</span>
@@ -1724,9 +2301,9 @@ export default function App() {
               {/* Inner Phone Screen */}
               <div style={{ borderRadius: '44px', width: '100%', height: '100%', overflow: 'hidden', position: 'relative', backgroundColor: '#12121a' }}>
                 <img 
-                  src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600&auto=format&fit=crop" 
+                  src="https://i.postimg.cc/kMZfXGNX/crrr.jpg" 
                   alt="Sanjana Editorial"
-                  className="w-full h-full object-cover opacity-90 transition-transform duration-700 hover:scale-105 grayscale hover:grayscale-0"
+                  className="w-full h-full object-cover opacity-90 transition-transform duration-700 hover:scale-105"
                 />
               </div>
 
